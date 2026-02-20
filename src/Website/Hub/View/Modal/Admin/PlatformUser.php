@@ -14,9 +14,12 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Services\EntitlementService;
+use Website\Hub\Concerns\HasRateLimiting;
 
 class PlatformUser extends Component
 {
+    use HasRateLimiting;
+
     public User $user;
 
     // Editable fields
@@ -80,27 +83,31 @@ class PlatformUser extends Component
 
     public function saveTier(): void
     {
-        $this->user->tier = UserTier::from($this->editingTier);
-        $this->user->save();
+        $this->rateLimit('admin-tier-change', 10, function () {
+            $this->user->tier = UserTier::from($this->editingTier);
+            $this->user->save();
 
-        $this->actionMessage = "Tier updated to {$this->editingTier}.";
-        $this->actionType = 'success';
+            $this->actionMessage = "Tier updated to {$this->editingTier}.";
+            $this->actionType = 'success';
+        });
     }
 
     public function saveVerification(): void
     {
-        if ($this->editingVerified && ! $this->user->email_verified_at) {
-            $this->user->email_verified_at = now();
-        } elseif (! $this->editingVerified) {
-            $this->user->email_verified_at = null;
-        }
+        $this->rateLimit('admin-verification', 10, function () {
+            if ($this->editingVerified && ! $this->user->email_verified_at) {
+                $this->user->email_verified_at = now();
+            } elseif (! $this->editingVerified) {
+                $this->user->email_verified_at = null;
+            }
 
-        $this->user->save();
+            $this->user->save();
 
-        $this->actionMessage = $this->editingVerified
-            ? 'Email marked as verified.'
-            : 'Email verification removed.';
-        $this->actionType = 'success';
+            $this->actionMessage = $this->editingVerified
+                ? 'Email marked as verified.'
+                : 'Email verification removed.';
+            $this->actionType = 'success';
+        });
     }
 
     public function resendVerification(): void
@@ -123,21 +130,23 @@ class PlatformUser extends Component
      */
     public function exportUserData()
     {
-        $data = $this->collectUserData();
+        return $this->rateLimit('admin-export', 5, function () {
+            $data = $this->collectUserData();
 
-        $filename = "user-data-{$this->user->id}-".now()->format('Y-m-d-His').'.json';
+            $filename = "user-data-{$this->user->id}-".now()->format('Y-m-d-His').'.json';
 
-        Log::info('GDPR data export performed by admin', [
-            'admin_id' => auth()->id(),
-            'target_user_id' => $this->user->id,
-            'target_email' => $this->user->email,
-        ]);
+            Log::info('GDPR data export performed by admin', [
+                'admin_id' => auth()->id(),
+                'target_user_id' => $this->user->id,
+                'target_email' => $this->user->email,
+            ]);
 
-        return response()->streamDownload(function () use ($data) {
-            echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        }, $filename, [
-            'Content-Type' => 'application/json',
-        ]);
+            return response()->streamDownload(function () use ($data) {
+                echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            }, $filename, [
+                'Content-Type' => 'application/json',
+            ]);
+        });
     }
 
     /**
@@ -240,32 +249,34 @@ class PlatformUser extends Component
      */
     public function scheduleDelete(): void
     {
-        if ($this->user->isHades() && $this->user->id === auth()->id()) {
-            $this->actionMessage = 'You cannot delete your own Hades account from here.';
-            $this->actionType = 'error';
+        $this->rateLimit('admin-deletion', 3, function () {
+            if ($this->user->isHades() && $this->user->id === auth()->id()) {
+                $this->actionMessage = 'You cannot delete your own Hades account from here.';
+                $this->actionType = 'error';
+                $this->showDeleteConfirm = false;
+
+                return;
+            }
+
+            $request = AccountDeletionRequest::createForUser($this->user, $this->deleteReason ?: 'Admin initiated - GDPR request');
+
+            Log::warning('GDPR deletion scheduled by admin', [
+                'admin_id' => auth()->id(),
+                'target_user_id' => $this->user->id,
+                'target_email' => $this->user->email,
+                'immediate' => $this->immediateDelete,
+                'reason' => $this->deleteReason,
+            ]);
+
+            if ($this->immediateDelete) {
+                $this->executeImmediateDelete($request);
+            } else {
+                $this->actionMessage = 'Account deletion scheduled. Will be deleted in 7 days unless cancelled.';
+                $this->actionType = 'warning';
+            }
+
             $this->showDeleteConfirm = false;
-
-            return;
-        }
-
-        $request = AccountDeletionRequest::createForUser($this->user, $this->deleteReason ?: 'Admin initiated - GDPR request');
-
-        Log::warning('GDPR deletion scheduled by admin', [
-            'admin_id' => auth()->id(),
-            'target_user_id' => $this->user->id,
-            'target_email' => $this->user->email,
-            'immediate' => $this->immediateDelete,
-            'reason' => $this->deleteReason,
-        ]);
-
-        if ($this->immediateDelete) {
-            $this->executeImmediateDelete($request);
-        } else {
-            $this->actionMessage = 'Account deletion scheduled. Will be deleted in 7 days unless cancelled.';
-            $this->actionType = 'warning';
-        }
-
-        $this->showDeleteConfirm = false;
+        });
     }
 
     /**
@@ -340,50 +351,52 @@ class PlatformUser extends Component
      */
     public function anonymizeUser(): void
     {
-        if ($this->user->isHades() && $this->user->id === auth()->id()) {
-            $this->actionMessage = 'You cannot anonymize your own account.';
-            $this->actionType = 'error';
+        $this->rateLimit('admin-deletion', 3, function () {
+            if ($this->user->isHades() && $this->user->id === auth()->id()) {
+                $this->actionMessage = 'You cannot anonymize your own account.';
+                $this->actionType = 'error';
 
-            return;
-        }
-
-        $originalEmail = $this->user->email;
-        $anonymizedId = 'anon_'.$this->user->id.'_'.now()->timestamp;
-
-        DB::transaction(function () use ($anonymizedId) {
-            $this->user->update([
-                'name' => 'Anonymized User',
-                'email' => $anonymizedId.'@anonymized.local',
-                'password' => bcrypt(str()->random(64)),
-                'tier' => UserTier::FREE,
-                'email_verified_at' => null,
-                'cached_stats' => null,
-            ]);
-
-            // Remove from all workspaces
-            if (method_exists($this->user, 'hostWorkspaces')) {
-                $this->user->hostWorkspaces()->detach();
+                return;
             }
 
-            // Cancel any pending deletions
-            AccountDeletionRequest::where('user_id', $this->user->id)
-                ->whereNull('completed_at')
-                ->whereNull('cancelled_at')
-                ->update(['cancelled_at' => now()]);
+            $originalEmail = $this->user->email;
+            $anonymizedId = 'anon_'.$this->user->id.'_'.now()->timestamp;
+
+            DB::transaction(function () use ($anonymizedId) {
+                $this->user->update([
+                    'name' => 'Anonymized User',
+                    'email' => $anonymizedId.'@anonymized.local',
+                    'password' => bcrypt(str()->random(64)),
+                    'tier' => UserTier::FREE,
+                    'email_verified_at' => null,
+                    'cached_stats' => null,
+                ]);
+
+                // Remove from all workspaces
+                if (method_exists($this->user, 'hostWorkspaces')) {
+                    $this->user->hostWorkspaces()->detach();
+                }
+
+                // Cancel any pending deletions
+                AccountDeletionRequest::where('user_id', $this->user->id)
+                    ->whereNull('completed_at')
+                    ->whereNull('cancelled_at')
+                    ->update(['cancelled_at' => now()]);
+            });
+
+            Log::warning('User anonymized by admin (GDPR)', [
+                'admin_id' => auth()->id(),
+                'target_user_id' => $this->user->id,
+                'original_email' => $originalEmail,
+            ]);
+
+            $this->user->refresh();
+            $this->editingTier = $this->user->tier?->value ?? 'free';
+            $this->editingVerified = false;
+
+            $this->actionMessage = 'User data has been anonymized.';
+            $this->actionType = 'success';
         });
-
-        Log::warning('User anonymized by admin (GDPR)', [
-            'admin_id' => auth()->id(),
-            'target_user_id' => $this->user->id,
-            'original_email' => $originalEmail,
-        ]);
-
-        $this->user->refresh();
-        $this->editingTier = $this->user->tier?->value ?? 'free';
-        $this->editingVerified = false;
-
-        $this->actionMessage = 'User data has been anonymized.';
-        $this->actionType = 'success';
     }
 
     /**
@@ -448,33 +461,35 @@ class PlatformUser extends Component
      */
     public function provisionPackage(): void
     {
-        if (! $this->selectedWorkspaceId || ! $this->selectedPackageCode) {
-            $this->actionMessage = 'Please select a workspace and package.';
-            $this->actionType = 'warning';
+        $this->rateLimit('admin-entitlement', 10, function () {
+            if (! $this->selectedWorkspaceId || ! $this->selectedPackageCode) {
+                $this->actionMessage = 'Please select a workspace and package.';
+                $this->actionType = 'warning';
 
-            return;
-        }
+                return;
+            }
 
-        $workspace = Workspace::findOrFail($this->selectedWorkspaceId);
-        $package = Package::where('code', $this->selectedPackageCode)->firstOrFail();
+            $workspace = Workspace::findOrFail($this->selectedWorkspaceId);
+            $package = Package::where('code', $this->selectedPackageCode)->firstOrFail();
 
-        $entitlements = app(EntitlementService::class);
-        $entitlements->provisionPackage($workspace, $this->selectedPackageCode, [
-            'source' => 'admin',
-        ]);
+            $entitlements = app(EntitlementService::class);
+            $entitlements->provisionPackage($workspace, $this->selectedPackageCode, [
+                'source' => 'admin',
+            ]);
 
-        Log::info('Package provisioned by admin', [
-            'admin_id' => auth()->id(),
-            'user_id' => $this->user->id,
-            'workspace_id' => $workspace->id,
-            'package_code' => $this->selectedPackageCode,
-        ]);
+            Log::info('Package provisioned by admin', [
+                'admin_id' => auth()->id(),
+                'user_id' => $this->user->id,
+                'workspace_id' => $workspace->id,
+                'package_code' => $this->selectedPackageCode,
+            ]);
 
-        $this->actionMessage = "Package '{$package->name}' provisioned to workspace '{$workspace->name}'.";
-        $this->actionType = 'success';
+            $this->actionMessage = "Package '{$package->name}' provisioned to workspace '{$workspace->name}'.";
+            $this->actionType = 'success';
 
-        $this->closePackageModal();
-        unset($this->workspaces); // Clear computed cache
+            $this->closePackageModal();
+            unset($this->workspaces); // Clear computed cache
+        });
     }
 
     /**
@@ -482,34 +497,36 @@ class PlatformUser extends Component
      */
     public function revokePackage(int $workspaceId, string $packageCode): void
     {
-        $workspace = Workspace::findOrFail($workspaceId);
+        $this->rateLimit('admin-entitlement', 10, function () use ($workspaceId, $packageCode) {
+            $workspace = Workspace::findOrFail($workspaceId);
 
-        // Verify this belongs to one of the user's workspaces
-        if (! $this->user->hostWorkspaces->contains($workspace)) {
-            $this->actionMessage = 'This workspace does not belong to this user.';
-            $this->actionType = 'error';
+            // Verify this belongs to one of the user's workspaces
+            if (! $this->user->hostWorkspaces->contains($workspace)) {
+                $this->actionMessage = 'This workspace does not belong to this user.';
+                $this->actionType = 'error';
 
-            return;
-        }
+                return;
+            }
 
-        $package = Package::where('code', $packageCode)->first();
-        $packageName = $package?->name ?? $packageCode;
-        $workspaceName = $workspace->name;
+            $package = Package::where('code', $packageCode)->first();
+            $packageName = $package?->name ?? $packageCode;
+            $workspaceName = $workspace->name;
 
-        $entitlements = app(EntitlementService::class);
-        $entitlements->revokePackage($workspace, $packageCode, 'admin');
+            $entitlements = app(EntitlementService::class);
+            $entitlements->revokePackage($workspace, $packageCode, 'admin');
 
-        Log::info('Package revoked by admin', [
-            'admin_id' => auth()->id(),
-            'user_id' => $this->user->id,
-            'workspace_id' => $workspace->id,
-            'package_code' => $packageCode,
-        ]);
+            Log::info('Package revoked by admin', [
+                'admin_id' => auth()->id(),
+                'user_id' => $this->user->id,
+                'workspace_id' => $workspace->id,
+                'package_code' => $packageCode,
+            ]);
 
-        $this->actionMessage = "Package '{$packageName}' revoked from workspace '{$workspaceName}'.";
-        $this->actionType = 'success';
+            $this->actionMessage = "Package '{$packageName}' revoked from workspace '{$workspaceName}'.";
+            $this->actionType = 'success';
 
-        unset($this->workspaces); // Clear computed cache
+            unset($this->workspaces); // Clear computed cache
+        });
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -586,68 +603,70 @@ class PlatformUser extends Component
      */
     public function provisionEntitlement(): void
     {
-        if (! $this->entitlementWorkspaceId || ! $this->entitlementFeatureCode) {
-            $this->actionMessage = 'Please select a workspace and feature.';
-            $this->actionType = 'warning';
+        $this->rateLimit('admin-entitlement', 10, function () {
+            if (! $this->entitlementWorkspaceId || ! $this->entitlementFeatureCode) {
+                $this->actionMessage = 'Please select a workspace and feature.';
+                $this->actionType = 'warning';
 
-            return;
-        }
+                return;
+            }
 
-        $workspace = Workspace::findOrFail($this->entitlementWorkspaceId);
-        $feature = Feature::where('code', $this->entitlementFeatureCode)->first();
+            $workspace = Workspace::findOrFail($this->entitlementWorkspaceId);
+            $feature = Feature::where('code', $this->entitlementFeatureCode)->first();
 
-        if (! $feature) {
-            $this->actionMessage = 'Feature not found.';
-            $this->actionType = 'error';
+            if (! $feature) {
+                $this->actionMessage = 'Feature not found.';
+                $this->actionType = 'error';
 
-            return;
-        }
+                return;
+            }
 
-        // Verify this belongs to one of the user's workspaces
-        if (! $this->user->hostWorkspaces->contains($workspace)) {
-            $this->actionMessage = 'This workspace does not belong to this user.';
-            $this->actionType = 'error';
+            // Verify this belongs to one of the user's workspaces
+            if (! $this->user->hostWorkspaces->contains($workspace)) {
+                $this->actionMessage = 'This workspace does not belong to this user.';
+                $this->actionType = 'error';
 
-            return;
-        }
+                return;
+            }
 
-        $options = [
-            'source' => 'admin',
-            'boost_type' => match ($this->entitlementType) {
-                'enable' => Boost::BOOST_TYPE_ENABLE,
-                'add_limit' => Boost::BOOST_TYPE_ADD_LIMIT,
-                'unlimited' => Boost::BOOST_TYPE_UNLIMITED,
-                default => Boost::BOOST_TYPE_ENABLE,
-            },
-            'duration_type' => $this->entitlementDuration === 'permanent'
-                ? Boost::DURATION_PERMANENT
-                : Boost::DURATION_DURATION,
-        ];
+            $options = [
+                'source' => 'admin',
+                'boost_type' => match ($this->entitlementType) {
+                    'enable' => Boost::BOOST_TYPE_ENABLE,
+                    'add_limit' => Boost::BOOST_TYPE_ADD_LIMIT,
+                    'unlimited' => Boost::BOOST_TYPE_UNLIMITED,
+                    default => Boost::BOOST_TYPE_ENABLE,
+                },
+                'duration_type' => $this->entitlementDuration === 'permanent'
+                    ? Boost::DURATION_PERMANENT
+                    : Boost::DURATION_DURATION,
+            ];
 
-        if ($this->entitlementType === 'add_limit' && $this->entitlementLimit) {
-            $options['limit_value'] = $this->entitlementLimit;
-        }
+            if ($this->entitlementType === 'add_limit' && $this->entitlementLimit) {
+                $options['limit_value'] = $this->entitlementLimit;
+            }
 
-        if ($this->entitlementDuration === 'duration' && $this->entitlementExpiresAt) {
-            $options['expires_at'] = $this->entitlementExpiresAt;
-        }
+            if ($this->entitlementDuration === 'duration' && $this->entitlementExpiresAt) {
+                $options['expires_at'] = $this->entitlementExpiresAt;
+            }
 
-        $entitlements = app(EntitlementService::class);
-        $entitlements->provisionBoost($workspace, $this->entitlementFeatureCode, $options);
+            $entitlements = app(EntitlementService::class);
+            $entitlements->provisionBoost($workspace, $this->entitlementFeatureCode, $options);
 
-        Log::info('Entitlement provisioned by admin', [
-            'admin_id' => auth()->id(),
-            'user_id' => $this->user->id,
-            'workspace_id' => $workspace->id,
-            'feature_code' => $this->entitlementFeatureCode,
-            'type' => $this->entitlementType,
-        ]);
+            Log::info('Entitlement provisioned by admin', [
+                'admin_id' => auth()->id(),
+                'user_id' => $this->user->id,
+                'workspace_id' => $workspace->id,
+                'feature_code' => $this->entitlementFeatureCode,
+                'type' => $this->entitlementType,
+            ]);
 
-        $this->actionMessage = "Entitlement '{$feature->name}' added to workspace '{$workspace->name}'.";
-        $this->actionType = 'success';
+            $this->actionMessage = "Entitlement '{$feature->name}' added to workspace '{$workspace->name}'.";
+            $this->actionType = 'success';
 
-        $this->closeEntitlementModal();
-        unset($this->workspaceEntitlements);
+            $this->closeEntitlementModal();
+            unset($this->workspaceEntitlements);
+        });
     }
 
     /**
@@ -655,34 +674,36 @@ class PlatformUser extends Component
      */
     public function removeBoost(int $boostId): void
     {
-        $boost = Boost::findOrFail($boostId);
+        $this->rateLimit('admin-entitlement', 10, function () use ($boostId) {
+            $boost = Boost::findOrFail($boostId);
 
-        // Verify this belongs to one of the user's workspaces
-        $workspace = $boost->workspace;
-        if (! $this->user->hostWorkspaces->contains($workspace)) {
-            $this->actionMessage = 'This boost does not belong to this user.';
-            $this->actionType = 'error';
+            // Verify this belongs to one of the user's workspaces
+            $workspace = $boost->workspace;
+            if (! $this->user->hostWorkspaces->contains($workspace)) {
+                $this->actionMessage = 'This boost does not belong to this user.';
+                $this->actionType = 'error';
 
-            return;
-        }
+                return;
+            }
 
-        $featureCode = $boost->feature_code;
-        $workspaceName = $workspace->name;
+            $featureCode = $boost->feature_code;
+            $workspaceName = $workspace->name;
 
-        $boost->update(['status' => Boost::STATUS_CANCELLED]);
+            $boost->update(['status' => Boost::STATUS_CANCELLED]);
 
-        Log::info('Boost removed by admin', [
-            'admin_id' => auth()->id(),
-            'user_id' => $this->user->id,
-            'workspace_id' => $workspace->id,
-            'boost_id' => $boostId,
-            'feature_code' => $featureCode,
-        ]);
+            Log::info('Boost removed by admin', [
+                'admin_id' => auth()->id(),
+                'user_id' => $this->user->id,
+                'workspace_id' => $workspace->id,
+                'boost_id' => $boostId,
+                'feature_code' => $featureCode,
+            ]);
 
-        $this->actionMessage = "Boost for '{$featureCode}' removed from workspace '{$workspaceName}'.";
-        $this->actionType = 'success';
+            $this->actionMessage = "Boost for '{$featureCode}' removed from workspace '{$workspaceName}'.";
+            $this->actionType = 'success';
 
-        unset($this->workspaceEntitlements);
+            unset($this->workspaceEntitlements);
+        });
     }
 
     public function render()
