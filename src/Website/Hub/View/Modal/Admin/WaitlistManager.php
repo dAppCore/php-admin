@@ -10,10 +10,12 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Website\Hub\Concerns\HasRateLimiting;
 
 #[Title('Waitlist')]
 class WaitlistManager extends Component
 {
+    use HasRateLimiting;
     use WithPagination;
 
     // Filters
@@ -68,19 +70,21 @@ class WaitlistManager extends Component
      */
     public function sendInvite(int $id): void
     {
-        $entry = WaitlistEntry::findOrFail($id);
+        $this->rateLimit('admin-mutation', 10, function () use ($id) {
+            $entry = WaitlistEntry::findOrFail($id);
 
-        if ($entry->isInvited()) {
-            session()->flash('error', 'This person has already been invited.');
+            if ($entry->isInvited()) {
+                session()->flash('error', 'This person has already been invited.');
 
-            return;
-        }
+                return;
+            }
 
-        $entry->generateInviteCode();
-        $entry->notify(new WaitlistInviteNotification($entry));
+            $entry->generateInviteCode();
+            $entry->notify(new WaitlistInviteNotification($entry));
 
-        session()->flash('message', "Invite sent to {$entry->email}");
-        $this->refreshStats();
+            session()->flash('message', "Invite sent to {$entry->email}");
+            $this->refreshStats();
+        });
     }
 
     /**
@@ -88,28 +92,30 @@ class WaitlistManager extends Component
      */
     public function sendBulkInvites(): void
     {
-        $entries = WaitlistEntry::whereIn('id', $this->selected)
-            ->whereNull('invited_at')
-            ->get();
+        $this->rateLimit('admin-mutation', 10, function () {
+            $entries = WaitlistEntry::whereIn('id', $this->selected)
+                ->whereNull('invited_at')
+                ->get();
 
-        if ($entries->isEmpty()) {
-            session()->flash('error', 'No pending entries selected.');
+            if ($entries->isEmpty()) {
+                session()->flash('error', 'No pending entries selected.');
 
-            return;
-        }
+                return;
+            }
 
-        $count = 0;
-        foreach ($entries as $entry) {
-            $entry->generateInviteCode();
-            $entry->notify(new WaitlistInviteNotification($entry));
-            $count++;
-        }
+            $count = 0;
+            foreach ($entries as $entry) {
+                $entry->generateInviteCode();
+                $entry->notify(new WaitlistInviteNotification($entry));
+                $count++;
+            }
 
-        $this->selected = [];
-        $this->selectAll = false;
+            $this->selected = [];
+            $this->selectAll = false;
 
-        session()->flash('message', "Sent {$count} invite(s) successfully.");
-        $this->refreshStats();
+            session()->flash('message', "Sent {$count} invite(s) successfully.");
+            $this->refreshStats();
+        });
     }
 
     /**
@@ -141,18 +147,20 @@ class WaitlistManager extends Component
      */
     public function delete(int $id): void
     {
-        $entry = WaitlistEntry::findOrFail($id);
+        $this->rateLimit('admin-mutation', 10, function () use ($id) {
+            $entry = WaitlistEntry::findOrFail($id);
 
-        if ($entry->hasConverted()) {
-            session()->flash('error', 'Cannot delete entries that have converted to users.');
+            if ($entry->hasConverted()) {
+                session()->flash('error', 'Cannot delete entries that have converted to users.');
 
-            return;
-        }
+                return;
+            }
 
-        $entry->delete();
+            $entry->delete();
 
-        session()->flash('message', 'Entry deleted.');
-        $this->refreshStats();
+            session()->flash('message', 'Entry deleted.');
+            $this->refreshStats();
+        });
     }
 
     /**
@@ -171,30 +179,32 @@ class WaitlistManager extends Component
      */
     public function export()
     {
-        $entries = $this->getFilteredQuery()->get();
+        return $this->rateLimit('admin-export', 5, function () {
+            $entries = $this->getFilteredQuery()->get();
 
-        $csv = "Email,Name,Interest,Source,Status,Signed Up,Invited,Registered\n";
+            $csv = "Email,Name,Interest,Source,Status,Signed Up,Invited,Registered\n";
 
-        foreach ($entries as $entry) {
-            $status = $entry->hasConverted() ? 'Converted' : ($entry->isInvited() ? 'Invited' : 'Pending');
-            $csv .= sprintf(
-                "%s,%s,%s,%s,%s,%s,%s,%s\n",
-                $entry->email,
-                $entry->name ?? '',
-                $entry->interest ?? '',
-                $entry->source ?? '',
-                $status,
-                $entry->created_at->format('Y-m-d'),
-                $entry->invited_at?->format('Y-m-d') ?? '',
-                $entry->registered_at?->format('Y-m-d') ?? ''
-            );
-        }
+            foreach ($entries as $entry) {
+                $status = $entry->hasConverted() ? 'Converted' : ($entry->isInvited() ? 'Invited' : 'Pending');
+                $csv .= sprintf(
+                    "%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    $entry->email,
+                    $entry->name ?? '',
+                    $entry->interest ?? '',
+                    $entry->source ?? '',
+                    $status,
+                    $entry->created_at->format('Y-m-d'),
+                    $entry->invited_at?->format('Y-m-d') ?? '',
+                    $entry->registered_at?->format('Y-m-d') ?? ''
+                );
+            }
 
-        return response()->streamDownload(function () use ($csv) {
-            echo $csv;
-        }, 'waitlist-export-'.now()->format('Y-m-d').'.csv', [
-            'Content-Type' => 'text/csv',
-        ]);
+            return response()->streamDownload(function () use ($csv) {
+                echo $csv;
+            }, 'waitlist-export-'.now()->format('Y-m-d').'.csv', [
+                'Content-Type' => 'text/csv',
+            ]);
+        });
     }
 
     protected function refreshStats(): void

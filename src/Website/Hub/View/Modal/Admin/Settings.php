@@ -15,9 +15,12 @@ use Core\Tenant\Mail\AccountDeletionRequested;
 use Core\Tenant\Models\AccountDeletionRequest;
 use Core\Tenant\Models\User;
 use Core\Tenant\Services\UserStatsService;
+use Website\Hub\Concerns\HasRateLimiting;
 
 class Settings extends Component
 {
+    use HasRateLimiting;
+
     // Active section for sidebar navigation
     #[Url(as: 'tab')]
     public string $activeSection = 'profile';
@@ -108,6 +111,12 @@ class Settings extends Component
         $this->timezones = UserStatsService::getTimezoneList();
     }
 
+    protected function onRateLimited(string $action, string $key): void
+    {
+        $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+        Flux::toast(text: "Too many requests. Please wait {$seconds} seconds before trying again.", variant: 'danger');
+    }
+
     protected function getUserSetting(string $name, mixed $default = null): mixed
     {
         $setting = Setting::where('user_id', Auth::id())
@@ -119,19 +128,21 @@ class Settings extends Component
 
     public function updateProfile(): void
     {
-        $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:'.(new User)->getTable().',email,'.Auth::id()],
-        ]);
+        $this->rateLimit('profile-update', 20, function () {
+            $this->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'email', 'max:255', 'unique:'.(new User)->getTable().',email,'.Auth::id()],
+            ]);
 
-        $user = User::findOrFail(Auth::id());
-        $user->update([
-            'name' => $this->name,
-            'email' => $this->email,
-        ]);
+            $user = User::findOrFail(Auth::id());
+            $user->update([
+                'name' => $this->name,
+                'email' => $this->email,
+            ]);
 
-        $this->dispatch('profile-updated');
-        Flux::toast(text: __('hub::hub.settings.messages.profile_updated'), variant: 'success');
+            $this->dispatch('profile-updated');
+            Flux::toast(text: __('hub::hub.settings.messages.profile_updated'), variant: 'success');
+        });
     }
 
     public function updatePreferences(): void
@@ -163,22 +174,24 @@ class Settings extends Component
 
     public function updatePassword(): void
     {
-        $this->validate([
-            'current_password' => ['required', 'current_password'],
-            'new_password' => ['required', 'confirmed', Password::defaults()],
-        ]);
+        $this->rateLimit('password-change', 5, function () {
+            $this->validate([
+                'current_password' => ['required', 'current_password'],
+                'new_password' => ['required', 'confirmed', Password::defaults()],
+            ]);
 
-        $user = User::findOrFail(Auth::id());
-        $user->update([
-            'password' => Hash::make($this->new_password),
-        ]);
+            $user = User::findOrFail(Auth::id());
+            $user->update([
+                'password' => Hash::make($this->new_password),
+            ]);
 
-        $this->current_password = '';
-        $this->new_password = '';
-        $this->new_password_confirmation = '';
+            $this->current_password = '';
+            $this->new_password = '';
+            $this->new_password_confirmation = '';
 
-        $this->dispatch('password-updated');
-        Flux::toast(text: __('hub::hub.settings.messages.password_updated'), variant: 'success');
+            $this->dispatch('password-updated');
+            Flux::toast(text: __('hub::hub.settings.messages.password_updated'), variant: 'success');
+        });
     }
 
     public function enableTwoFactor(): void
@@ -213,20 +226,22 @@ class Settings extends Component
 
     public function requestAccountDeletion(): void
     {
-        // Get the base user model for the app
-        $user = \Core\Tenant\Models\User::findOrFail(Auth::id());
+        $this->rateLimit('account-deletion', 3, function () {
+            // Get the base user model for the app
+            $user = \Core\Tenant\Models\User::findOrFail(Auth::id());
 
-        // Create the deletion request
-        $deletionRequest = AccountDeletionRequest::createForUser($user, $this->deleteReason ?: null);
+            // Create the deletion request
+            $deletionRequest = AccountDeletionRequest::createForUser($user, $this->deleteReason ?: null);
 
-        // Send confirmation email
-        Mail::to($user->email)->send(new AccountDeletionRequested($deletionRequest));
+            // Send confirmation email
+            Mail::to($user->email)->send(new AccountDeletionRequested($deletionRequest));
 
-        $this->pendingDeletion = $deletionRequest;
-        $this->showDeleteConfirmation = false;
-        $this->deleteReason = '';
+            $this->pendingDeletion = $deletionRequest;
+            $this->showDeleteConfirmation = false;
+            $this->deleteReason = '';
 
-        Flux::toast(text: __('hub::hub.settings.messages.deletion_scheduled'), variant: 'warning');
+            Flux::toast(text: __('hub::hub.settings.messages.deletion_scheduled'), variant: 'warning');
+        });
     }
 
     public function cancelAccountDeletion(): void
