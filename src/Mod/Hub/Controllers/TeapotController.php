@@ -91,7 +91,7 @@ class TeapotController
     }
 
     /**
-     * Whitelist headers useful for bot detection before storing.
+     * Remove sensitive headers and enforce size limits before storing.
      */
     protected function sanitizeHeaders(array $headers): array
     {
@@ -109,7 +109,14 @@ class TeapotController
             'x-client-ip',
         ];
 
-        return array_intersect_key($headers, array_flip($allowed));
+        $headers = array_intersect_key($headers, array_flip($allowed));
+
+        // Enforce header count limit before passing to the model
+        if (count($headers) > HoneypotHit::HEADERS_MAX_COUNT) {
+            $headers = array_slice($headers, 0, HoneypotHit::HEADERS_MAX_COUNT, true);
+        }
+
+        return $headers;
     }
 
     /**
