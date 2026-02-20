@@ -49,6 +49,8 @@ beforeEach(function () {
 
     // Clear rate limiter between tests
     RateLimiter::clear('honeypot:log:192.168.1.100');
+    RateLimiter::clear('honeypot:log:203.0.113.50');
+    RateLimiter::clear('honeypot:log:127.0.0.1');
 });
 
 afterEach(function () {
@@ -472,13 +474,14 @@ describe('TeapotController', function () {
     it('records critical severity for admin paths', function () {
         $controller = new TeapotController();
         $request = Request::create('/admin', 'GET');
+        $request->server->set('REMOTE_ADDR', '203.0.113.50');
 
         $mockGeoIp = Mockery::mock(DetectLocation::class);
         $mockGeoIp->shouldReceive('getCountryCode')->andReturn(null);
         $mockGeoIp->shouldReceive('getCity')->andReturn(null);
         app()->instance(DetectLocation::class, $mockGeoIp);
 
-        // Critical path should trigger auto-block for non-localhost
+        // Critical path should trigger auto-block for non-private IPs
         $mockBlocklist = Mockery::mock(BlocklistService::class);
         $mockBlocklist->shouldReceive('block')->once();
         app()->instance(BlocklistService::class, $mockBlocklist);
@@ -490,14 +493,16 @@ describe('TeapotController', function () {
         expect($response->headers->get('X-Severity'))->toBe('critical');
     });
 
-    it('sanitizes sensitive headers before storing', function () {
+    it('uses whitelist to only store allowed headers', function () {
         $controller = new TeapotController();
         $request = Request::create('/teapot', 'GET');
         $request->headers->set('User-Agent', 'TestBot/1.0');
+        $request->headers->set('Accept-Language', 'en-GB');
         $request->headers->set('Cookie', 'session=secret123');
         $request->headers->set('Authorization', 'Bearer token123');
         $request->headers->set('X-CSRF-Token', 'csrf123');
         $request->headers->set('X-Custom-Header', 'safe-value');
+        $request->headers->set('X-Forwarded-For', '203.0.113.50');
 
         $mockGeoIp = Mockery::mock(DetectLocation::class);
         $mockGeoIp->shouldReceive('getCountryCode')->andReturn(null);
@@ -513,13 +518,18 @@ describe('TeapotController', function () {
         $hit = HoneypotHit::first();
         $headers = $hit->headers;
 
-        // Sensitive headers should be removed
+        // Sensitive headers must not be stored
         expect($headers)->not->toHaveKey('cookie');
         expect($headers)->not->toHaveKey('authorization');
         expect($headers)->not->toHaveKey('x-csrf-token');
 
-        // Safe headers should be preserved
-        expect($headers)->toHaveKey('x-custom-header');
+        // Non-whitelisted headers must not be stored
+        expect($headers)->not->toHaveKey('x-custom-header');
+
+        // Whitelisted headers should be preserved
+        expect($headers)->toHaveKey('user-agent');
+        expect($headers)->toHaveKey('accept-language');
+        expect($headers)->toHaveKey('x-forwarded-for');
     });
 
     it('truncates long user agent strings', function () {
@@ -574,6 +584,140 @@ describe('TeapotController', function () {
 });
 
 // =============================================================================
+// Private IP Detection Tests
+// =============================================================================
+
+describe('Private IP detection', function () {
+    it('detects IPv4 loopback as private', function () {
+        $controller = new TeapotController();
+        $reflection = new ReflectionMethod($controller, 'isPrivateIp');
+        $reflection->setAccessible(true);
+
+        expect($reflection->invoke($controller, '127.0.0.1'))->toBeTrue();
+    });
+
+    it('detects IPv6 loopback as private', function () {
+        $controller = new TeapotController();
+        $reflection = new ReflectionMethod($controller, 'isPrivateIp');
+        $reflection->setAccessible(true);
+
+        expect($reflection->invoke($controller, '::1'))->toBeTrue();
+    });
+
+    it('detects IPv4-mapped IPv6 loopback as private', function () {
+        $controller = new TeapotController();
+        $reflection = new ReflectionMethod($controller, 'isPrivateIp');
+        $reflection->setAccessible(true);
+
+        expect($reflection->invoke($controller, '::ffff:127.0.0.1'))->toBeTrue();
+    });
+
+    it('detects private network ranges as private', function () {
+        $controller = new TeapotController();
+        $reflection = new ReflectionMethod($controller, 'isPrivateIp');
+        $reflection->setAccessible(true);
+
+        expect($reflection->invoke($controller, '10.0.0.1'))->toBeTrue();
+        expect($reflection->invoke($controller, '172.17.0.1'))->toBeTrue();
+        expect($reflection->invoke($controller, '192.168.1.1'))->toBeTrue();
+    });
+
+    it('allows public IP addresses', function () {
+        $controller = new TeapotController();
+        $reflection = new ReflectionMethod($controller, 'isPrivateIp');
+        $reflection->setAccessible(true);
+
+        expect($reflection->invoke($controller, '8.8.8.8'))->toBeFalse();
+        expect($reflection->invoke($controller, '203.0.113.50'))->toBeFalse();
+    });
+
+    it('skips auto-block for private IPs on critical paths', function () {
+        $controller = new TeapotController();
+        $request = Request::create('/admin', 'GET');
+        $request->server->set('REMOTE_ADDR', '192.168.1.100');
+
+        $mockGeoIp = Mockery::mock(DetectLocation::class);
+        $mockGeoIp->shouldReceive('getCountryCode')->andReturn(null);
+        $mockGeoIp->shouldReceive('getCity')->andReturn(null);
+        app()->instance(DetectLocation::class, $mockGeoIp);
+
+        $mockBlocklist = Mockery::mock(BlocklistService::class);
+        $mockBlocklist->shouldNotReceive('block');
+        app()->instance(BlocklistService::class, $mockBlocklist);
+
+        $response = $controller($request);
+
+        expect($response->getStatusCode())->toBe(418);
+    });
+});
+
+// =============================================================================
+// Referer Validation Tests
+// =============================================================================
+
+describe('Referer validation', function () {
+    it('stores valid URL referers', function () {
+        $controller = new TeapotController();
+        $request = Request::create('/teapot', 'GET');
+        $request->headers->set('Referer', 'https://example.com/page');
+
+        $mockGeoIp = Mockery::mock(DetectLocation::class);
+        $mockGeoIp->shouldReceive('getCountryCode')->andReturn(null);
+        $mockGeoIp->shouldReceive('getCity')->andReturn(null);
+        app()->instance(DetectLocation::class, $mockGeoIp);
+
+        $mockBlocklist = Mockery::mock(BlocklistService::class);
+        $mockBlocklist->shouldReceive('block')->andReturn(null);
+        app()->instance(BlocklistService::class, $mockBlocklist);
+
+        $controller($request);
+
+        $hit = HoneypotHit::first();
+        expect($hit->referer)->toBe('https://example.com/page');
+    });
+
+    it('replaces invalid referers with marker', function () {
+        $controller = new TeapotController();
+        $request = Request::create('/teapot', 'GET');
+        $request->headers->set('Referer', '<script>alert("xss")</script>');
+
+        $mockGeoIp = Mockery::mock(DetectLocation::class);
+        $mockGeoIp->shouldReceive('getCountryCode')->andReturn(null);
+        $mockGeoIp->shouldReceive('getCity')->andReturn(null);
+        app()->instance(DetectLocation::class, $mockGeoIp);
+
+        $mockBlocklist = Mockery::mock(BlocklistService::class);
+        $mockBlocklist->shouldReceive('block')->andReturn(null);
+        app()->instance(BlocklistService::class, $mockBlocklist);
+
+        $controller($request);
+
+        $hit = HoneypotHit::first();
+        expect($hit->referer)->toBe('invalid-url');
+    });
+
+    it('stores empty string for missing referer', function () {
+        $controller = new TeapotController();
+        $request = Request::create('/teapot', 'GET');
+        // No Referer header set
+
+        $mockGeoIp = Mockery::mock(DetectLocation::class);
+        $mockGeoIp->shouldReceive('getCountryCode')->andReturn(null);
+        $mockGeoIp->shouldReceive('getCity')->andReturn(null);
+        app()->instance(DetectLocation::class, $mockGeoIp);
+
+        $mockBlocklist = Mockery::mock(BlocklistService::class);
+        $mockBlocklist->shouldReceive('block')->andReturn(null);
+        app()->instance(BlocklistService::class, $mockBlocklist);
+
+        $controller($request);
+
+        $hit = HoneypotHit::first();
+        expect($hit->referer)->toBe('');
+    });
+});
+
+// =============================================================================
 // Integration Tests
 // =============================================================================
 
@@ -581,6 +725,7 @@ describe('Honeypot integration', function () {
     it('creates hit record with all fields populated', function () {
         $controller = new TeapotController();
         $request = Request::create('/wp-admin/admin.php', 'POST');
+        $request->server->set('REMOTE_ADDR', '203.0.113.50');
         $request->headers->set('User-Agent', 'python-requests/2.28.1');
         $request->headers->set('Referer', 'https://malicious-site.com/scanner');
         $request->headers->set('Accept-Language', 'en-US,en;q=0.9');

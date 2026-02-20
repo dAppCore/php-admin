@@ -44,7 +44,7 @@ class TeapotController
             HoneypotHit::create([
                 'ip_address' => $ip,
                 'user_agent' => substr($userAgent ?? '', 0, 1000),
-                'referer' => substr($request->header('Referer', ''), 0, 2000),
+                'referer' => $this->sanitizeReferer($request->header('Referer', '')),
                 'path' => $path,
                 'method' => $request->method(),
                 'headers' => $this->sanitizeHeaders($request->headers->all()),
@@ -59,7 +59,7 @@ class TeapotController
         // Auto-block critical hits (active probing) if enabled in config.
         // Skip localhost in dev to avoid blocking yourself.
         $autoBlockEnabled = config('core.bouncer.honeypot.auto_block_critical', true);
-        $isLocalhost = in_array($ip, ['127.0.0.1', '::1'], true);
+        $isLocalhost = $this->isPrivateIp($ip);
         $isCritical = $severity === HoneypotHit::getSeverityCritical();
 
         if ($autoBlockEnabled && $isCritical && ! $isLocalhost) {
@@ -75,17 +75,56 @@ class TeapotController
     }
 
     /**
-     * Remove sensitive headers before storing.
+     * Validate and truncate the referer header.
+     */
+    protected function sanitizeReferer(string $referer): string
+    {
+        if ($referer === '') {
+            return '';
+        }
+
+        if (filter_var($referer, FILTER_VALIDATE_URL) === false) {
+            return 'invalid-url';
+        }
+
+        return substr($referer, 0, 2000);
+    }
+
+    /**
+     * Whitelist headers useful for bot detection before storing.
      */
     protected function sanitizeHeaders(array $headers): array
     {
-        $sensitive = ['cookie', 'authorization', 'x-csrf-token', 'x-xsrf-token'];
+        $allowed = [
+            'user-agent',
+            'accept',
+            'accept-language',
+            'accept-encoding',
+            'referer',
+            'origin',
+            'x-requested-with',
+            'x-forwarded-for',
+            'x-real-ip',
+            'cf-connecting-ip',
+            'x-client-ip',
+        ];
 
-        foreach ($sensitive as $key) {
-            unset($headers[$key]);
-        }
+        return array_intersect_key($headers, array_flip($allowed));
+    }
 
-        return $headers;
+    /**
+     * Check whether an IP address is private or reserved.
+     */
+    protected function isPrivateIp(string $ip): bool
+    {
+        // Normalise IPv4-mapped IPv6 addresses
+        $ip = preg_replace('/^::ffff:/i', '', $ip);
+
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) === false;
     }
 
     /**
