@@ -6,6 +6,7 @@ namespace Core\Mod\Hub\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 
 class Service extends Model
 {
@@ -122,6 +123,55 @@ class Service extends Model
     }
 
     /**
+     * Maximum size in bytes for the serialised metadata JSON (64 KB).
+     */
+    public const METADATA_MAX_SIZE = 65_535;
+
+    /**
+     * Maximum number of top-level keys allowed in metadata.
+     */
+    public const METADATA_MAX_KEYS = 100;
+
+    /**
+     * Validate and set the metadata attribute.
+     */
+    public function setMetadataAttribute(mixed $value): void
+    {
+        if (is_null($value)) {
+            $this->attributes['metadata'] = null;
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new InvalidArgumentException('Metadata must be valid JSON');
+            }
+            $value = $decoded;
+        }
+
+        if (! is_array($value)) {
+            throw new InvalidArgumentException('Metadata must be an array or null');
+        }
+
+        if (count($value) > self::METADATA_MAX_KEYS) {
+            throw new InvalidArgumentException(
+                'Metadata exceeds maximum of ' . self::METADATA_MAX_KEYS . ' keys'
+            );
+        }
+
+        $json = json_encode($value);
+        if (strlen($json) > self::METADATA_MAX_SIZE) {
+            throw new InvalidArgumentException(
+                'Metadata exceeds maximum size of ' . self::METADATA_MAX_SIZE . ' bytes'
+            );
+        }
+
+        $this->attributes['metadata'] = $json;
+    }
+
+    /**
      * Check if a specific metadata key exists.
      */
     public function hasMeta(string $key): bool
@@ -139,9 +189,17 @@ class Service extends Model
 
     /**
      * Set a metadata value.
+     *
+     * Keys must be non-empty and contain only alphanumeric characters, underscores, and hyphens.
      */
     public function setMeta(string $key, mixed $value): void
     {
+        if (empty($key) || ! preg_match('/^[a-zA-Z0-9_-]+$/', $key)) {
+            throw new InvalidArgumentException(
+                'Metadata key must be non-empty and contain only alphanumeric characters, underscores, and hyphens'
+            );
+        }
+
         $metadata = $this->metadata ?? [];
         $metadata[$key] = $value;
         $this->metadata = $metadata;

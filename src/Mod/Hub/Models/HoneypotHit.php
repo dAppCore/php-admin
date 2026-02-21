@@ -28,6 +28,61 @@ class HoneypotHit extends Model
     ];
 
     /**
+     * Maximum number of headers to store per hit.
+     */
+    public const HEADERS_MAX_COUNT = 50;
+
+    /**
+     * Maximum size in bytes for the serialised headers JSON (16 KB).
+     */
+    public const HEADERS_MAX_SIZE = 16_384;
+
+    /**
+     * Validate and set the headers attribute, enforcing count and size limits.
+     */
+    public function setHeadersAttribute(mixed $value): void
+    {
+        if (is_null($value)) {
+            $this->attributes['headers'] = null;
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->attributes['headers'] = null;
+
+                return;
+            }
+            $value = $decoded;
+        }
+
+        if (! is_array($value)) {
+            $this->attributes['headers'] = null;
+
+            return;
+        }
+
+        // Limit header count
+        if (count($value) > self::HEADERS_MAX_COUNT) {
+            $value = array_slice($value, 0, self::HEADERS_MAX_COUNT, true);
+        }
+
+        // Check total size and truncate further if needed
+        $json = json_encode($value);
+        if (strlen($json) > self::HEADERS_MAX_SIZE) {
+            // Progressively reduce until under limit
+            while (strlen($json) > self::HEADERS_MAX_SIZE && count($value) > 0) {
+                array_pop($value);
+                $json = json_encode($value);
+            }
+        }
+
+        $this->attributes['headers'] = $json;
+    }
+
+    /**
      * Severity levels for honeypot hits.
      *
      * These can be overridden via config('core.bouncer.honeypot.severity_levels').
