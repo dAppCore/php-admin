@@ -1,31 +1,31 @@
 {
-  "name": "host-uk/core-admin",
-  "description": "Admin panel module for Core PHP framework",
-  "keywords": [
-    "laravel",
-    "admin",
-    "panel",
-    "dashboard"
-  ],
-  "license": "EUPL-1.2",
-  "require": {
-    "php": "^8.2",
-    "host-uk/core": "@dev"
-  },
-  "autoload": {
-    "psr-4": {
-      "Core\\Admin\\": "src/",
-      "Website\\Hub\\": "src/Website/Hub/",
-      "Core\\Service\\Admin\\": "Service/"
-    }
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Core\\Admin\\Boot"
-      ]
-    }
-  },
-  "minimum-stability": "stable",
-  "prefer-stable": true
+    "name": "core/php-admin",
+    "description": "Admin panel module for Core PHP framework",
+    "keywords": [
+        "laravel",
+        "admin",
+        "panel",
+        "dashboard"
+    ],
+    "license": "EUPL-1.2",
+    "require": {
+        "php": "^8.2",
+        "core/php-framework": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\Admin\\": "src/",
+            "Website\\Hub\\": "src/Website/Hub/",
+            "Core\\Service\\Admin\\": "Service/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Core\\Admin\\Boot"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
