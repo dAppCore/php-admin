@@ -5,7 +5,7 @@ Admin panel components, Livewire modals, and service management interface for th
 ## Installation
 
 ```bash
-composer require host-uk/core-admin
+composer require lthn/php-admin
 ```
 
 ## Features

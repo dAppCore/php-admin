@@ -1,5 +1,5 @@
 {
-    "name": "core/php-admin",
+    "name": "lthn/php-admin",
     "description": "Admin panel module for Core PHP framework",
     "keywords": [
         "laravel",
@@ -10,7 +10,7 @@
     "license": "EUPL-1.2",
     "require": {
         "php": "^8.2",
-        "core/php": "*"
+        "lthn/php": "*"
     },
     "autoload": {
         "psr-4": {
@@ -27,5 +27,8 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "replace": {
+        "core/php-admin": "self.version"
+    }
 }
