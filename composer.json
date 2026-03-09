@@ -10,7 +10,7 @@
     "license": "EUPL-1.2",
     "require": {
         "php": "^8.2",
-        "core/php-framework": "@dev"
+        "core/php": "*"
     },
     "autoload": {
         "psr-4": {
