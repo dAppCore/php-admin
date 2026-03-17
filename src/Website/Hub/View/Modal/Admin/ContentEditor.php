@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Website\Hub\View\Modal\Admin;
 
 use Core\Mod\Content\Enums\ContentType;
