@@ -91,12 +91,50 @@ class Boot extends ServiceProvider implements AdminMenuProvider
         app(AdminMenuRegistry::class)->register($this);
 
         // Register routes for configured domains
+        $primary = true;
+
         foreach ($this->domains() as $domain) {
-            $event->routes(fn () => Route::prefix('hub')
-                ->name('hub.')
+            if ($primary) {
+                $event->routes(fn () => Route::prefix('hub')
+                    ->name('hub.')
+                    ->domain($domain)
+                    ->group(__DIR__.'/Routes/admin.php'));
+
+                $primary = false;
+
+                continue;
+            }
+
+            $event->routes(fn () => $this->prefixSecondaryDomainRoutes($domain, fn () => Route::prefix('hub')
                 ->domain($domain)
-                ->group(__DIR__.'/Routes/admin.php'));
+                ->group(__DIR__.'/Routes/admin.php')));
         }
+    }
+
+    private function prefixSecondaryDomainRoutes(string $domain, callable $register): void
+    {
+        $routes = Route::getRoutes();
+        $existingRoutes = [];
+        foreach ($routes->getRoutes() as $route) {
+            $existingRoutes[spl_object_id($route)] = true;
+        }
+        $register();
+        foreach ($routes->getRoutes() as $route) {
+            if (isset($existingRoutes[spl_object_id($route)])) {
+                continue;
+            }
+            $name = $route->getName();
+            if ($name === null) {
+                continue;
+            }
+            $route->action['as'] = self::domainRoutePrefix($domain).$name;
+        }
+        $routes->refreshNameLookups();
+    }
+
+    private static function domainRoutePrefix(string $domain): string
+    {
+        return strtr($domain, ['.' => '_', '-' => '_']).'.';
     }
 
     /**
