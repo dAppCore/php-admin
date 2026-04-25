@@ -14,35 +14,40 @@ namespace Core\Admin\Search;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 
-/**
- * Data transfer object for search results.
- *
- * Represents a single search result from a SearchProvider. Implements
- * Arrayable and JsonSerializable for easy serialization to Livewire
- * and JavaScript.
- */
 final class SearchResult implements Arrayable, JsonSerializable
 {
-    /**
-     * Create a new search result instance.
-     *
-     * @param  string  $id  Unique identifier for the result
-     * @param  string  $title  Primary display text
-     * @param  string  $url  Navigation URL
-     * @param  string  $type  The search type (from provider)
-     * @param  string  $icon  Icon name for display
-     * @param  string|null  $subtitle  Secondary display text
-     * @param  array  $meta  Additional metadata
-     */
-    public function __construct(
-        public readonly string $id,
-        public readonly string $title,
-        public readonly string $url,
-        public readonly string $type,
-        public readonly string $icon,
-        public readonly ?string $subtitle = null,
-        public readonly array $meta = [],
-    ) {}
+    public readonly string $id;
+
+    public readonly string $title;
+
+    public readonly ?string $subtitle;
+
+    public readonly string $url;
+
+    public readonly string $icon;
+
+    public readonly string $category;
+
+    public readonly int $score;
+
+    public readonly string $type;
+
+    public readonly array $meta;
+
+    public function __construct(mixed ...$arguments)
+    {
+        $data = self::normaliseConstructorArguments($arguments);
+
+        $this->id = (string) ($data['id'] ?? uniqid('', true));
+        $this->title = (string) ($data['title'] ?? '');
+        $this->subtitle = isset($data['subtitle']) ? (string) $data['subtitle'] : null;
+        $this->url = (string) ($data['url'] ?? '#');
+        $this->type = (string) ($data['type'] ?? $data['category'] ?? 'unknown');
+        $this->icon = (string) ($data['icon'] ?? 'document');
+        $this->category = (string) ($data['category'] ?? $this->type);
+        $this->score = (int) ($data['score'] ?? 0);
+        $this->meta = is_array($data['meta'] ?? null) ? $data['meta'] : [];
+    }
 
     /**
      * Create a SearchResult from an array.
@@ -50,13 +55,15 @@ final class SearchResult implements Arrayable, JsonSerializable
     public static function fromArray(array $data): static
     {
         return new self(
-            id: (string) ($data['id'] ?? uniqid()),
+            id: (string) ($data['id'] ?? uniqid('', true)),
             title: (string) ($data['title'] ?? ''),
             url: (string) ($data['url'] ?? '#'),
-            type: (string) ($data['type'] ?? 'unknown'),
+            type: (string) ($data['type'] ?? $data['category'] ?? 'unknown'),
             icon: (string) ($data['icon'] ?? 'document'),
             subtitle: $data['subtitle'] ?? null,
             meta: $data['meta'] ?? [],
+            category: (string) ($data['category'] ?? $data['type'] ?? 'unknown'),
+            score: (int) ($data['score'] ?? 0),
         );
     }
 
@@ -75,6 +82,8 @@ final class SearchResult implements Arrayable, JsonSerializable
             icon: $this->icon !== 'document' ? $this->icon : $icon,
             subtitle: $this->subtitle,
             meta: $this->meta,
+            category: $type,
+            score: $this->score,
         );
     }
 
@@ -100,5 +109,38 @@ final class SearchResult implements Arrayable, JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->toArray();
+    }
+
+    /**
+     * Normalise both the legacy registry constructor and the new DTO shape.
+     */
+    private static function normaliseConstructorArguments(array $arguments): array
+    {
+        if (! array_is_list($arguments)) {
+            return $arguments;
+        }
+
+        if (count($arguments) >= 6 && is_numeric($arguments[5])) {
+            return [
+                'title' => $arguments[0] ?? '',
+                'subtitle' => $arguments[1] ?? null,
+                'url' => $arguments[2] ?? '#',
+                'icon' => $arguments[3] ?? 'document',
+                'category' => $arguments[4] ?? 'unknown',
+                'type' => $arguments[4] ?? 'unknown',
+                'score' => $arguments[5] ?? 0,
+            ];
+        }
+
+        return [
+            'id' => $arguments[0] ?? uniqid('', true),
+            'title' => $arguments[1] ?? '',
+            'url' => $arguments[2] ?? '#',
+            'type' => $arguments[3] ?? 'unknown',
+            'icon' => $arguments[4] ?? 'document',
+            'subtitle' => $arguments[5] ?? null,
+            'meta' => $arguments[6] ?? [],
+            'category' => $arguments[3] ?? 'unknown',
+        ];
     }
 }
