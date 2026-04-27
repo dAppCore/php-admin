@@ -129,6 +129,16 @@ describe('AdminMenuRegistry _Bad', function () {
         expect(fn () => $registry->groups())
             ->toThrow(InvalidArgumentException::class, 'Menu group key cannot be empty.');
     });
+
+    it('normalises menu group key and label whitespace', function () {
+        $group = MenuGroup::fromArray([
+            'key' => ' reports ',
+            'label' => ' Reports ',
+        ]);
+
+        expect($group->key)->toBe('reports')
+            ->and($group->label)->toBe('Reports');
+    });
 });
 
 describe('AdminMenuRegistry _Ugly', function () {

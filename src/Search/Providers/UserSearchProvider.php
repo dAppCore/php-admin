@@ -21,6 +21,9 @@ class UserSearchProvider implements SearchProvider
 {
     /**
      * @param  class-string<Model>  $modelClass
+     *
+     * @example
+     * $provider = new UserSearchProvider(User::class, 10);
      */
     public function __construct(
         private readonly string $modelClass = User::class,
@@ -29,6 +32,9 @@ class UserSearchProvider implements SearchProvider
 
     /**
      * @return array<int, SearchResult>
+     *
+     * @example
+     * $results = $provider->search('alice@example.test');
      */
     public function search(string $query): array
     {
@@ -43,25 +49,45 @@ class UserSearchProvider implements SearchProvider
 
         return $modelClass::query()
             ->where(function (Builder $builder) use ($term): void {
-                $builder->where('name', 'like', $term)
-                    ->orWhere('email', 'like', $term);
+                $builder->whereRaw("name LIKE ? ESCAPE '!'", [$term])
+                    ->orWhereRaw("email LIKE ? ESCAPE '!'", [$term]);
             })
-            ->limit($this->limit)
             ->get()
             ->map(fn (Model $user): SearchResult => $this->resultFor($user, $query))
+            ->sortByDesc(static fn (SearchResult $result): int => $result->score)
+            ->take($this->limit)
+            ->values()
             ->all();
     }
 
+    /**
+     * Get the display label for user results.
+     *
+     * @example
+     * $provider->getLabel(); // "Users"
+     */
     public function getLabel(): string
     {
         return 'Users';
     }
 
+    /**
+     * Get the provider priority used by the dispatcher.
+     *
+     * @example
+     * $provider->getPriority(); // 100
+     */
     public function getPriority(): int
     {
         return 100;
     }
 
+    /**
+     * Convert a user model into a scored search result.
+     *
+     * @example
+     * $result = $this->resultFor($user, 'alice');
+     */
     private function resultFor(Model $user, string $query): SearchResult
     {
         $name = (string) ($user->getAttribute('name') ?? '');
@@ -78,11 +104,23 @@ class UserSearchProvider implements SearchProvider
         );
     }
 
+    /**
+     * Escape wildcard characters and wrap a query for portable SQL LIKE.
+     *
+     * @example
+     * $term = $this->likeTerm('100%');
+     */
     private function likeTerm(string $query): string
     {
-        return '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query).'%';
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query).'%';
     }
 
+    /**
+     * Score a result by exact, prefix, and substring relevance.
+     *
+     * @example
+     * $score = $this->score('alice', 'Alice Admin', 'alice@example.test');
+     */
     private function score(string $query, string $name, string $email): int
     {
         $query = strtolower($query);

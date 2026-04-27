@@ -226,13 +226,17 @@ describe('SearchResult DTO', function (): void {
     it('Ugly: supports both new and legacy positional construction', function (): void {
         $newShape = new SearchResult('Workspace', 'primary-site', '/hub/workspaces/primary-site', 'fa-folder', 'Workspaces', 85);
         $legacyShape = new SearchResult('user-1', 'Alice Admin', '/hub/platform/user/1', 'users', 'fa-user', 'alice@example.test');
+        $numericSubtitleLegacyShape = new SearchResult('user-2', 'Numeric Subtitle', '/hub/platform/user/2', 'users', 'fa-user', '12345');
 
         expect($newShape->title)->toBe('Workspace')
             ->and($newShape->category)->toBe('Workspaces')
             ->and($newShape->score)->toBe(85)
             ->and($legacyShape->id)->toBe('user-1')
             ->and($legacyShape->title)->toBe('Alice Admin')
-            ->and($legacyShape->type)->toBe('users');
+            ->and($legacyShape->type)->toBe('users')
+            ->and($numericSubtitleLegacyShape->id)->toBe('user-2')
+            ->and($numericSubtitleLegacyShape->subtitle)->toBe('12345')
+            ->and($numericSubtitleLegacyShape->score)->toBe(0);
     });
 });
 
@@ -270,6 +274,18 @@ describe('UserSearchProvider', function (): void {
 
         expect($provider->search('%'))->toBe([]);
     });
+
+    it('Ugly: ranks all user candidates before applying the provider limit', function (): void {
+        SearchSystemUserModel::query()->create(['name' => 'The Target Person', 'email' => 'first@example.test']);
+        SearchSystemUserModel::query()->create(['name' => 'target', 'email' => 'second@example.test']);
+
+        $provider = new UserSearchProvider(SearchSystemUserModel::class, 1);
+        $results = $provider->search('target');
+
+        expect($results)->toHaveCount(1)
+            ->and($results[0]->title)->toBe('target')
+            ->and($results[0]->score)->toBe(100);
+    });
 });
 
 describe('WorkspaceSearchProvider', function (): void {
@@ -305,6 +321,18 @@ describe('WorkspaceSearchProvider', function (): void {
         $provider = new WorkspaceSearchProvider(SearchSystemWorkspaceModel::class);
 
         expect($provider->search('_'))->toBe([]);
+    });
+
+    it('Ugly: ranks all workspace candidates before applying the provider limit', function (): void {
+        SearchSystemWorkspaceModel::query()->create(['name' => 'The Target Workspace', 'slug' => 'target-workspace']);
+        SearchSystemWorkspaceModel::query()->create(['name' => 'target', 'slug' => 'exact-target']);
+
+        $provider = new WorkspaceSearchProvider(SearchSystemWorkspaceModel::class, 1);
+        $results = $provider->search('target');
+
+        expect($results)->toHaveCount(1)
+            ->and($results[0]->title)->toBe('target')
+            ->and($results[0]->score)->toBe(100);
     });
 });
 
@@ -431,5 +459,50 @@ describe('SearchDispatcher', function (): void {
 
         expect($results[0]->title)->toBe('High priority')
             ->and($results[1]->title)->toBe('Low priority');
+    });
+
+    it('Ugly: reports a failing provider and continues aggregating healthy results', function (): void {
+        $failing = new class implements SearchProvider
+        {
+            public function search(string $query): array
+            {
+                throw new RuntimeException('Provider failed.');
+            }
+
+            public function getLabel(): string
+            {
+                return 'Failing';
+            }
+
+            public function getPriority(): int
+            {
+                return 100;
+            }
+        };
+
+        $healthy = new class implements SearchProvider
+        {
+            public function search(string $query): array
+            {
+                return [
+                    new SearchResult(title: 'Healthy result', subtitle: null, url: '/healthy', icon: 'fa-check', category: 'Healthy', score: 80),
+                ];
+            }
+
+            public function getLabel(): string
+            {
+                return 'Healthy';
+            }
+
+            public function getPriority(): int
+            {
+                return 1;
+            }
+        };
+
+        $results = (new SearchDispatcher([$failing, $healthy]))->search('query');
+
+        expect($results)->toHaveCount(1)
+            ->and($results[0]->title)->toBe('Healthy result');
     });
 });

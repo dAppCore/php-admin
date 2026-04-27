@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Core\Admin\Menu;
 
+use Closure;
 use InvalidArgumentException;
 
 /**
@@ -31,6 +32,9 @@ final class AdminMenuRegistry
 
     /**
      * Register a menu provider.
+     *
+     * @example
+     * $registry->register(new BlogMenuProvider);
      */
     public function register(AdminMenuProvider $provider): void
     {
@@ -41,6 +45,9 @@ final class AdminMenuRegistry
      * Register multiple menu providers.
      *
      * @param  array<int, AdminMenuProvider>  $providers
+     *
+     * @example
+     * $registry->registerMany([$blogProvider, $shopProvider]);
      */
     public function registerMany(array $providers): void
     {
@@ -53,6 +60,9 @@ final class AdminMenuRegistry
      * Get all registered providers in registration order.
      *
      * @return array<int, AdminMenuProvider>
+     *
+     * @example
+     * $providers = $registry->providers();
      */
     public function providers(): array
     {
@@ -63,6 +73,9 @@ final class AdminMenuRegistry
      * Get all known menu groups sorted by priority.
      *
      * @return array<string, MenuGroup>
+     *
+     * @example
+     * $groups = $registry->groups();
      */
     public function groups(): array
     {
@@ -73,6 +86,9 @@ final class AdminMenuRegistry
      * Resolve providers into grouped and sorted menu definitions.
      *
      * @return array<string, array{group: MenuGroup, items: array<int, MenuItem>}>
+     *
+     * @example
+     * $menu = $registry->resolve();
      */
     public function resolve(): array
     {
@@ -148,6 +164,9 @@ final class AdminMenuRegistry
      * Resolve to a flat sorted item list.
      *
      * @return array<int, MenuItem>
+     *
+     * @example
+     * $items = $registry->items();
      */
     public function items(): array
     {
@@ -164,6 +183,9 @@ final class AdminMenuRegistry
      * Get default RFC groups.
      *
      * @return array<string, MenuGroup>
+     *
+     * @example
+     * $groups = $this->defaultGroups();
      */
     private function defaultGroups(): array
     {
@@ -180,6 +202,9 @@ final class AdminMenuRegistry
      * Resolve default and provider-supplied groups.
      *
      * @return array<string, MenuGroup>
+     *
+     * @example
+     * $groups = $this->resolveGroups();
      */
     private function resolveGroups(): array
     {
@@ -203,6 +228,9 @@ final class AdminMenuRegistry
      *
      * @param  array<string, MenuGroup>  $groups
      * @return array<string, MenuGroup>
+     *
+     * @example
+     * $groups = $this->sortGroups($groups);
      */
     private function sortGroups(array $groups): array
     {
@@ -221,6 +249,9 @@ final class AdminMenuRegistry
      * Sort providers by priority while preserving registration order ties.
      *
      * @return array<int, AdminMenuProvider>
+     *
+     * @example
+     * $providers = $this->sortedProviders();
      */
     private function sortedProviders(): array
     {
@@ -248,10 +279,15 @@ final class AdminMenuRegistry
     }
 
     /**
-     * @param  mixed  $item
+     * @example
+     * $item = $this->normaliseMenuItem(['label' => 'Reports', 'route' => 'admin.reports']);
      */
     private function normaliseMenuItem(mixed $item): MenuItem
     {
+        if ($item instanceof Closure) {
+            $item = $item();
+        }
+
         if ($item instanceof MenuItem) {
             return $item;
         }
@@ -267,10 +303,15 @@ final class AdminMenuRegistry
     }
 
     /**
-     * @param  mixed  $group
+     * @example
+     * $group = $this->normaliseMenuGroup(['key' => 'reports', 'label' => 'Reports']);
      */
     private function normaliseMenuGroup(mixed $group): MenuGroup
     {
+        if ($group instanceof Closure) {
+            $group = $group();
+        }
+
         if ($group instanceof MenuGroup) {
             return $group;
         }

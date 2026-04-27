@@ -2,10 +2,6 @@
 
 namespace Website\Hub\View\Modal\Admin;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Livewire\Attributes\Computed;
-use Livewire\Component;
 use Core\Tenant\Enums\UserTier;
 use Core\Tenant\Models\AccountDeletionRequest;
 use Core\Tenant\Models\Boost;
@@ -14,6 +10,11 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Services\EntitlementService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
+use Website\Hub\Boot;
 use Website\Hub\Concerns\HasRateLimiting;
 
 class PlatformUser extends Component
@@ -308,7 +309,7 @@ class PlatformUser extends Component
             session()->flash('platform_message', "User {$email} has been permanently deleted.");
             session()->flash('platform_message_type', 'success');
 
-            $this->redirect(route('hub.platform'), navigate: true);
+            $this->redirect(Boot::hubRoute('hub.platform'), navigate: true);
         } catch (\Exception $e) {
             Log::error('Failed to execute immediate deletion', [
                 'user_id' => $this->user->id,

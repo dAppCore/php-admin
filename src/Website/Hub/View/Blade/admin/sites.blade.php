@@ -61,7 +61,7 @@
                                 </flux:button>
                             @endif
                         </div>
-                        <flux:button href="{{ route('hub.sites.settings', ['workspace' => $workspace->slug]) }}" wire:navigate size="xs" variant="ghost" icon-trailing="chevron-right">
+                        <flux:button href="{{ \Website\Hub\Boot::hubRoute('hub.sites.settings', ['workspace' => $workspace->slug]) }}" wire:navigate size="xs" variant="ghost" icon-trailing="chevron-right">
                             Settings
                         </flux:button>
                     </div>

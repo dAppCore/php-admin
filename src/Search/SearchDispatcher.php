@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Core\Admin\Search;
 
+use Throwable;
+
 class SearchDispatcher
 {
     /**
@@ -20,6 +22,9 @@ class SearchDispatcher
 
     /**
      * @param  iterable<SearchProvider>  $providers
+     *
+     * @example
+     * $dispatcher = new SearchDispatcher([$users, $workspaces]);
      */
     public function __construct(iterable $providers = [])
     {
@@ -28,6 +33,12 @@ class SearchDispatcher
         }
     }
 
+    /**
+     * Register an additional search provider.
+     *
+     * @example
+     * $dispatcher->register($provider);
+     */
     public function register(SearchProvider $provider): self
     {
         $this->providers[] = $provider;
@@ -37,6 +48,9 @@ class SearchDispatcher
 
     /**
      * @return array<int, SearchProvider>
+     *
+     * @example
+     * $providers = $dispatcher->providers();
      */
     public function providers(): array
     {
@@ -47,6 +61,9 @@ class SearchDispatcher
      * Gather results from all providers and rank by score descending.
      *
      * @return array<int, SearchResult>
+     *
+     * @example
+     * $results = $dispatcher->search('dashboard');
      */
     public function search(string $query): array
     {
@@ -60,7 +77,19 @@ class SearchDispatcher
         $index = 0;
 
         foreach ($this->providers as $provider) {
-            foreach ($provider->search($query) as $result) {
+            try {
+                $results = $provider->search($query);
+            } catch (Throwable $exception) {
+                try {
+                    report($exception);
+                } catch (Throwable) {
+                    // Reporting is best effort because the dispatcher can run without a booted Laravel app.
+                }
+
+                continue;
+            }
+
+            foreach ($results as $result) {
                 if (! $result instanceof SearchResult) {
                     continue;
                 }

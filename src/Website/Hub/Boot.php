@@ -12,6 +12,8 @@ use Core\Front\Admin\Contracts\AdminMenuProvider;
 use Core\Website\DomainResolver;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Website\Hub\View\Modal\Admin\GlobalSearch;
+use Website\Hub\View\Modal\Admin\WorkspaceSwitcher;
 
 /**
  * Hub Website - Admin dashboard.
@@ -46,6 +48,9 @@ class Boot extends ServiceProvider implements AdminMenuProvider
 
     /**
      * Handle domain resolution - register if we match.
+     *
+     * @example
+     * $boot->onDomainResolving($event);
      */
     public function onDomainResolving(DomainResolving $event): void
     {
@@ -58,6 +63,12 @@ class Boot extends ServiceProvider implements AdminMenuProvider
         }
     }
 
+    /**
+     * Register service bindings for the Hub website.
+     *
+     * @example
+     * $boot->register();
+     */
     public function register(): void
     {
         //
@@ -67,6 +78,9 @@ class Boot extends ServiceProvider implements AdminMenuProvider
      * Get domains for this website.
      *
      * @return array<string>
+     *
+     * @example
+     * $domains = $this->domains();
      */
     protected function domains(): array
     {
@@ -75,6 +89,9 @@ class Boot extends ServiceProvider implements AdminMenuProvider
 
     /**
      * Register admin panel routes and components.
+     *
+     * @example
+     * $boot->onAdminPanel($event);
      */
     public function onAdminPanel(AdminPanelBooting $event): void
     {
@@ -84,8 +101,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
         $event->translations('hub', dirname(__DIR__, 2).'/Mod/Hub/Lang');
 
         // Register Livewire components
-        $event->livewire('hub.admin.workspace-switcher', \Website\Hub\View\Modal\Admin\WorkspaceSwitcher::class);
-        $event->livewire('hub.admin.global-search', \Website\Hub\View\Modal\Admin\GlobalSearch::class);
+        $event->livewire('hub.admin.workspace-switcher', WorkspaceSwitcher::class);
+        $event->livewire('hub.admin.global-search', GlobalSearch::class);
 
         // Register menu provider
         app(AdminMenuRegistry::class)->register($this);
@@ -106,11 +123,18 @@ class Boot extends ServiceProvider implements AdminMenuProvider
             }
 
             $event->routes(fn () => $this->prefixSecondaryDomainRoutes($domain, fn () => Route::prefix('hub')
+                ->name('hub.')
                 ->domain($domain)
                 ->group(__DIR__.'/Routes/admin.php')));
         }
     }
 
+    /**
+     * Register secondary-domain routes and prefix their names after registration.
+     *
+     * @example
+     * $this->prefixSecondaryDomainRoutes('hub.core.test', fn () => require __DIR__.'/Routes/admin.php');
+     */
     private function prefixSecondaryDomainRoutes(string $domain, callable $register): void
     {
         $routes = Route::getRoutes();
@@ -132,13 +156,95 @@ class Boot extends ServiceProvider implements AdminMenuProvider
         $routes->refreshNameLookups();
     }
 
+    /**
+     * Create an injective, route-safe prefix for a secondary domain.
+     *
+     * @example
+     * self::domainRoutePrefix('hub.core.test'); // "domain_6875622e636f72652e74657374."
+     */
     private static function domainRoutePrefix(string $domain): string
     {
-        return strtr($domain, ['.' => '_', '-' => '_']).'.';
+        return 'domain_'.bin2hex(strtolower($domain)).'.';
+    }
+
+    /**
+     * Generate a Hub URL for the current primary or secondary domain.
+     *
+     * @example
+     * $url = Boot::hubRoute('hub.dashboard');
+     */
+    public static function hubRoute(string $name, mixed $parameters = [], bool $absolute = true): string
+    {
+        return route(self::hubRouteName($name), $parameters, $absolute);
+    }
+
+    /**
+     * Resolve the current-domain route name for a canonical Hub route.
+     *
+     * @example
+     * $routeName = Boot::hubRouteName('hub.dashboard');
+     */
+    public static function hubRouteName(string $name): string
+    {
+        $name = ltrim($name, '.');
+        $prefix = self::currentHubRoutePrefix();
+
+        if ($prefix !== null && Route::has($prefix.$name)) {
+            return $prefix.$name;
+        }
+
+        if (Route::has($name)) {
+            return $name;
+        }
+
+        return $prefix !== null ? $prefix.$name : $name;
+    }
+
+    /**
+     * Check a Hub route pattern against canonical and current-domain route names.
+     *
+     * @example
+     * Boot::hubRouteIs('hub.sites*');
+     */
+    public static function hubRouteIs(string $pattern): bool
+    {
+        if (request()->routeIs($pattern)) {
+            return true;
+        }
+
+        $prefix = self::currentHubRoutePrefix();
+
+        return $prefix !== null && request()->routeIs($prefix.$pattern);
+    }
+
+    /**
+     * Extract the secondary-domain prefix from the active route name.
+     *
+     * @example
+     * $prefix = self::currentHubRoutePrefix();
+     */
+    private static function currentHubRoutePrefix(): ?string
+    {
+        $routeName = request()->route()?->getName();
+
+        if (! is_string($routeName)) {
+            return null;
+        }
+
+        $position = strpos($routeName, 'hub.');
+
+        if ($position === false || $position === 0) {
+            return null;
+        }
+
+        return substr($routeName, 0, $position);
     }
 
     /**
      * Provide admin menu items.
+     *
+     * @example
+     * $items = $boot->adminMenuItems();
      */
     public function adminMenuItems(): array
     {
@@ -150,8 +256,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
                 'item' => fn () => [
                     'label' => __('hub::hub.dashboard.title'),
                     'icon' => 'house',
-                    'href' => route('hub.dashboard'),
-                    'active' => request()->routeIs('hub.dashboard'),
+                    'href' => self::hubRoute('hub.dashboard'),
+                    'active' => self::hubRouteIs('hub.dashboard'),
                 ],
             ],
 
@@ -162,8 +268,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
                 'item' => fn () => [
                     'label' => __('hub::hub.workspaces.title'),
                     'icon' => 'folders',
-                    'href' => route('hub.sites'),
-                    'active' => request()->routeIs('hub.sites*'),
+                    'href' => self::hubRoute('hub.sites'),
+                    'active' => self::hubRouteIs('hub.sites*'),
                 ],
             ],
 
@@ -174,8 +280,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
                 'item' => fn () => [
                     'label' => __('hub::hub.quick_actions.profile.title'),
                     'icon' => 'user',
-                    'href' => route('hub.account'),
-                    'active' => request()->routeIs('hub.account') && ! request()->routeIs('hub.account.*'),
+                    'href' => self::hubRoute('hub.account'),
+                    'active' => self::hubRouteIs('hub.account') && ! self::hubRouteIs('hub.account.*'),
                 ],
             ],
 
@@ -186,8 +292,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
                 'item' => fn () => [
                     'label' => __('hub::hub.settings.title'),
                     'icon' => 'gear',
-                    'href' => route('hub.account.settings'),
-                    'active' => request()->routeIs('hub.account.settings'),
+                    'href' => self::hubRoute('hub.account.settings'),
+                    'active' => self::hubRouteIs('hub.account.settings'),
                 ],
             ],
 
@@ -198,8 +304,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
                 'item' => fn () => [
                     'label' => __('hub::hub.usage.title'),
                     'icon' => 'chart-pie',
-                    'href' => route('hub.account.usage'),
-                    'active' => request()->routeIs('hub.account.usage'),
+                    'href' => self::hubRoute('hub.account.usage'),
+                    'active' => self::hubRouteIs('hub.account.usage'),
                 ],
             ],
 
@@ -211,8 +317,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
                 'item' => fn () => [
                     'label' => 'Platform',
                     'icon' => 'server',
-                    'href' => route('hub.platform'),
-                    'active' => request()->routeIs('hub.platform*'),
+                    'href' => self::hubRoute('hub.platform'),
+                    'active' => self::hubRouteIs('hub.platform*'),
                 ],
             ],
 
@@ -224,8 +330,8 @@ class Boot extends ServiceProvider implements AdminMenuProvider
                 'item' => fn () => [
                     'label' => 'Services',
                     'icon' => 'puzzle-piece',
-                    'href' => route('hub.admin.services'),
-                    'active' => request()->routeIs('hub.admin.services'),
+                    'href' => self::hubRoute('hub.admin.services'),
+                    'active' => self::hubRouteIs('hub.admin.services'),
                 ],
             ],
         ];

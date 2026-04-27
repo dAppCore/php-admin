@@ -22,14 +22,20 @@ interface AdminMenuProvider
     /**
      * Menu items supplied by this provider.
      *
-     * @return array<int, MenuItem>
+     * @return array<int, MenuItem|array<string, mixed>|callable>
+     *
+     * @example
+     * return [new MenuItem('Reports', 'admin.reports', 'fa-file-lines', 'admin')];
      */
     public function getMenuItems(): array;
 
     /**
      * Menu groups supplied by this provider.
      *
-     * @return array<int, MenuGroup>
+     * @return array<int, MenuGroup|array<string, mixed>|callable>
+     *
+     * @example
+     * return [new MenuGroup('reports', 'Reports', 25)];
      */
     public function getMenuGroups(): array;
 
@@ -37,6 +43,9 @@ interface AdminMenuProvider
      * Provider priority used as a deterministic tie-breaker.
      *
      * Lower values resolve earlier. Higher priority appears later.
+     *
+     * @example
+     * return 50;
      */
     public function getPriority(): int;
 }

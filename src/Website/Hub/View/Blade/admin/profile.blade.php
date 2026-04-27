@@ -23,7 +23,7 @@
                     @endif
                 </div>
                 <div class="flex gap-2">
-                    <a href="{{ route('hub.account.settings') }}" class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors text-sm font-medium">
+                    <a href="{{ \Website\Hub\Boot::hubRoute('hub.account.settings') }}" class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors text-sm font-medium">
                         <core:icon name="gear" class="mr-2" /> {{ __('hub::hub.profile.actions.settings') }}
                     </a>
                 </div>
@@ -156,15 +156,15 @@
                     </h2>
                 </header>
                 <div class="p-5 space-y-2">
-                    <a href="{{ route('hub.account.settings') }}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                    <a href="{{ \Website\Hub\Boot::hubRoute('hub.account.settings') }}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
                         <core:icon name="user-pen" class="text-gray-400 group-hover:text-violet-500 transition-colors" />
                         <span class="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{{ __('hub::hub.profile.actions.edit_profile') }}</span>
                     </a>
-                    <a href="{{ route('hub.account.settings') }}#password" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                    <a href="{{ \Website\Hub\Boot::hubRoute('hub.account.settings') }}#password" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
                         <core:icon name="key" class="text-gray-400 group-hover:text-violet-500 transition-colors" />
                         <span class="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{{ __('hub::hub.profile.actions.change_password') }}</span>
                     </a>
-                    <a href="{{ route('hub.account.settings') }}#delete-account" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                    <a href="{{ \Website\Hub\Boot::hubRoute('hub.account.settings') }}#delete-account" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
                         <core:icon name="file-export" class="text-gray-400 group-hover:text-violet-500 transition-colors" />
                         <span class="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{{ __('hub::hub.profile.actions.export_data') }}</span>
                     </a>

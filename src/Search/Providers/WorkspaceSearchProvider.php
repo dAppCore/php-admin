@@ -21,6 +21,9 @@ class WorkspaceSearchProvider implements SearchProvider
 {
     /**
      * @param  class-string<Model>  $modelClass
+     *
+     * @example
+     * $provider = new WorkspaceSearchProvider(Workspace::class, 10);
      */
     public function __construct(
         private readonly string $modelClass = Workspace::class,
@@ -29,6 +32,9 @@ class WorkspaceSearchProvider implements SearchProvider
 
     /**
      * @return array<int, SearchResult>
+     *
+     * @example
+     * $results = $provider->search('primary-site');
      */
     public function search(string $query): array
     {
@@ -43,25 +49,45 @@ class WorkspaceSearchProvider implements SearchProvider
 
         return $modelClass::query()
             ->where(function (Builder $builder) use ($term): void {
-                $builder->where('name', 'like', $term)
-                    ->orWhere('slug', 'like', $term);
+                $builder->whereRaw("name LIKE ? ESCAPE '!'", [$term])
+                    ->orWhereRaw("slug LIKE ? ESCAPE '!'", [$term]);
             })
-            ->limit($this->limit)
             ->get()
             ->map(fn (Model $workspace): SearchResult => $this->resultFor($workspace, $query))
+            ->sortByDesc(static fn (SearchResult $result): int => $result->score)
+            ->take($this->limit)
+            ->values()
             ->all();
     }
 
+    /**
+     * Get the display label for workspace results.
+     *
+     * @example
+     * $provider->getLabel(); // "Workspaces"
+     */
     public function getLabel(): string
     {
         return 'Workspaces';
     }
 
+    /**
+     * Get the provider priority used by the dispatcher.
+     *
+     * @example
+     * $provider->getPriority(); // 90
+     */
     public function getPriority(): int
     {
         return 90;
     }
 
+    /**
+     * Convert a workspace model into a scored search result.
+     *
+     * @example
+     * $result = $this->resultFor($workspace, 'primary');
+     */
     private function resultFor(Model $workspace, string $query): SearchResult
     {
         $name = (string) ($workspace->getAttribute('name') ?? '');
@@ -78,11 +104,23 @@ class WorkspaceSearchProvider implements SearchProvider
         );
     }
 
+    /**
+     * Escape wildcard characters and wrap a query for portable SQL LIKE.
+     *
+     * @example
+     * $term = $this->likeTerm('docs_');
+     */
     private function likeTerm(string $query): string
     {
-        return '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query).'%';
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query).'%';
     }
 
+    /**
+     * Score a result by exact, prefix, and substring relevance.
+     *
+     * @example
+     * $score = $this->score('primary', 'Primary Site', 'primary-site');
+     */
     private function score(string $query, string $name, string $slug): int
     {
         $query = strtolower($query);

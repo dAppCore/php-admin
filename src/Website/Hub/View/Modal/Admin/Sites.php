@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Website\Hub\View\Modal\Admin;
 
+use Core\Tenant\Models\Feature;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
+use Core\Tenant\Services\EntitlementService;
+use Core\Tenant\Services\WorkspaceService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
@@ -11,11 +16,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Core\Tenant\Models\Feature;
-use Core\Tenant\Models\Package;
-use Core\Tenant\Models\Workspace;
-use Core\Tenant\Services\EntitlementService;
-use Core\Tenant\Services\WorkspaceService;
+use Website\Hub\Boot;
 
 /**
  * Workspace settings page at /hub/workspaces.
@@ -67,37 +68,37 @@ class Sites extends Component
             'services' => [
                 'label' => 'Services',
                 'icon' => 'puzzle-piece',
-                'href' => route('hub.sites').'?tab=services',
+                'href' => Boot::hubRoute('hub.sites').'?tab=services',
             ],
             'general' => [
                 'label' => 'General',
                 'icon' => 'gear',
-                'href' => route('hub.sites').'?tab=general',
+                'href' => Boot::hubRoute('hub.sites').'?tab=general',
             ],
             'deployment' => [
                 'label' => 'Deployment',
                 'icon' => 'rocket',
-                'href' => route('hub.sites').'?tab=deployment',
+                'href' => Boot::hubRoute('hub.sites').'?tab=deployment',
             ],
             'environment' => [
                 'label' => 'Environment',
                 'icon' => 'key',
-                'href' => route('hub.sites').'?tab=environment',
+                'href' => Boot::hubRoute('hub.sites').'?tab=environment',
             ],
             'ssl' => [
                 'label' => 'SSL & Security',
                 'icon' => 'shield-check',
-                'href' => route('hub.sites').'?tab=ssl',
+                'href' => Boot::hubRoute('hub.sites').'?tab=ssl',
             ],
             'backups' => [
                 'label' => 'Backups',
                 'icon' => 'cloud-arrow-up',
-                'href' => route('hub.sites').'?tab=backups',
+                'href' => Boot::hubRoute('hub.sites').'?tab=backups',
             ],
             'danger' => [
                 'label' => 'Danger Zone',
                 'icon' => 'triangle-exclamation',
-                'href' => route('hub.sites').'?tab=danger',
+                'href' => Boot::hubRoute('hub.sites').'?tab=danger',
             ],
         ];
     }
@@ -115,7 +116,7 @@ class Sites extends Component
                 'color' => 'violet',
                 'slug' => 'bio',
                 'feature' => 'core.srv.bio',
-                'adminRoute' => route('hub.services', ['service' => 'bio']),
+                'adminRoute' => Boot::hubRoute('hub.services', ['service' => 'bio']),
                 'features' => [
                     'Unlimited bio pages',
                     'Custom domains',
@@ -130,7 +131,7 @@ class Sites extends Component
                 'color' => 'blue',
                 'slug' => 'social',
                 'feature' => 'core.srv.social',
-                'adminRoute' => route('hub.services', ['service' => 'social']),
+                'adminRoute' => Boot::hubRoute('hub.services', ['service' => 'social']),
                 'features' => [
                     'Multi-platform posting',
                     'Content calendar',
@@ -145,7 +146,7 @@ class Sites extends Component
                 'color' => 'cyan',
                 'slug' => 'analytics',
                 'feature' => 'core.srv.analytics',
-                'adminRoute' => route('hub.services', ['service' => 'analytics']),
+                'adminRoute' => Boot::hubRoute('hub.services', ['service' => 'analytics']),
                 'features' => [
                     'Real-time visitors',
                     'Goal tracking',
@@ -160,7 +161,7 @@ class Sites extends Component
                 'color' => 'orange',
                 'slug' => 'trust',
                 'feature' => 'core.srv.trust',
-                'adminRoute' => route('hub.services', ['service' => 'trust']),
+                'adminRoute' => Boot::hubRoute('hub.services', ['service' => 'trust']),
                 'features' => [
                     'Purchase notifications',
                     'Review widgets',
@@ -175,7 +176,7 @@ class Sites extends Component
                 'color' => 'yellow',
                 'slug' => 'notify',
                 'feature' => 'core.srv.notify',
-                'adminRoute' => route('hub.services', ['service' => 'notify']),
+                'adminRoute' => Boot::hubRoute('hub.services', ['service' => 'notify']),
                 'features' => [
                     'Browser push notifications',
                     'Subscriber management',
@@ -190,7 +191,7 @@ class Sites extends Component
                 'color' => 'teal',
                 'slug' => 'support',
                 'feature' => 'core.srv.support',
-                'adminRoute' => route('hub.support.inbox'),
+                'adminRoute' => Boot::hubRoute('hub.support.inbox'),
                 'features' => [
                     'Email ticketing',
                     'Live chat widget',

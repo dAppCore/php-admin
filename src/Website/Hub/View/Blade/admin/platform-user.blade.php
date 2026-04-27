@@ -2,7 +2,7 @@
     {{-- Header --}}
     <div class="mb-8">
         <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
-            <a href="{{ route('hub.platform') }}" wire:navigate class="hover:text-gray-700 dark:hover:text-gray-200">
+            <a href="{{ \Website\Hub\Boot::hubRoute('hub.platform') }}" wire:navigate class="hover:text-gray-700 dark:hover:text-gray-200">
                 <core:icon name="arrow-left" class="mr-1" />
                 Platform Users
             </a>

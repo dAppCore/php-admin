@@ -21,6 +21,12 @@ use JsonSerializable;
  */
 final readonly class MenuItem implements Arrayable, JsonSerializable
 {
+    /**
+     * Create an immutable menu item definition.
+     *
+     * @example
+     * $item = new MenuItem('Reports', 'admin.reports', 'fa-file-lines', 'admin', 10);
+     */
     public function __construct(
         public string $label,
         public string|Closure $route,
@@ -52,6 +58,9 @@ final readonly class MenuItem implements Arrayable, JsonSerializable
      * to keep module registration concise.
      *
      * @param  array<string, mixed>  $data
+     *
+     * @example
+     * MenuItem::fromArray(['label' => 'Reports', 'route' => 'admin.reports', 'icon' => 'fa-file-lines', 'group' => 'admin']);
      */
     public static function fromArray(array $data): self
     {
@@ -88,6 +97,9 @@ final readonly class MenuItem implements Arrayable, JsonSerializable
 
     /**
      * Resolve the item route when the item is rendered.
+     *
+     * @example
+     * $route = $item->resolveRoute();
      */
     public function resolveRoute(): string
     {
@@ -104,6 +116,9 @@ final readonly class MenuItem implements Arrayable, JsonSerializable
      * Convert the item to an array for rendering.
      *
      * @return array{label: string, route: string, icon: string, group: string, priority: int}
+     *
+     * @example
+     * $payload = $item->toArray();
      */
     public function toArray(): array
     {
@@ -120,6 +135,9 @@ final readonly class MenuItem implements Arrayable, JsonSerializable
      * Specify data which should be serialized to JSON.
      *
      * @return array{label: string, route: string, icon: string, group: string, priority: int}
+     *
+     * @example
+     * json_encode($item);
      */
     public function jsonSerialize(): array
     {

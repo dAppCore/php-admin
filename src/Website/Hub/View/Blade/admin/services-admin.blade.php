@@ -51,7 +51,7 @@
             <nav class="flex -mb-px overflow-x-auto" aria-label="Services">
                 @foreach ($this->services as $key => $svc)
                     <a
-                        href="{{ route('hub.services', ['service' => $key]) }}"
+                        href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => $key]) }}"
                         wire:navigate
                         @class([
                             'group inline-flex items-center gap-2 px-6 py-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors',
@@ -144,7 +144,7 @@
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.your_bio_pages') }}</h3>
                         <div class="flex items-center gap-2">
-                            <a href="{{ route('hub.services', ['service' => 'bio', 'tab' => 'pages']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300">
+                            <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'bio', 'tab' => 'pages']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
                                 {{ __('hub::hub.services.actions.manage_biohost') }}
                             </a>
@@ -192,7 +192,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.all_pages') }}</h3>
-                        <flux:button href="{{ route('hub.services', ['service' => 'bio', 'tab' => 'pages']) }}" wire:navigate variant="primary" size="sm" icon="plus">
+                        <flux:button href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'bio', 'tab' => 'pages']) }}" wire:navigate variant="primary" size="sm" icon="plus">
                             {{ __('hub::hub.services.actions.create_page') }}
                         </flux:button>
                     </div>
@@ -240,7 +240,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.projects') }}</h3>
-                        <flux:button href="{{ route('hub.services', ['service' => 'bio', 'tab' => 'projects']) }}" wire:navigate variant="primary" size="sm" icon="folder-plus">
+                        <flux:button href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'bio', 'tab' => 'projects']) }}" wire:navigate variant="primary" size="sm" icon="folder-plus">
                             {{ __('hub::hub.services.actions.manage_projects') }}
                         </flux:button>
                     </div>
@@ -323,7 +323,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Connected Accounts</h3>
-                        <a href="{{ route('hub.services', ['service' => 'social', 'tab' => 'accounts']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'social', 'tab' => 'accounts']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                             Manage Accounts
                         </a>
@@ -378,7 +378,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Accounts</h3>
-                        <a href="{{ route('hub.services', ['service' => 'social', 'tab' => 'accounts']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'social', 'tab' => 'accounts']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
                             <i class="fa-solid fa-plus text-xs"></i>
                             Connect Account
                         </a>
@@ -435,7 +435,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Posts</h3>
-                        <a href="{{ route('hub.services', ['service' => 'social', 'tab' => 'posts']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'social', 'tab' => 'posts']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
                             <i class="fa-solid fa-plus text-xs"></i>
                             Create Post
                         </a>
@@ -1047,7 +1047,7 @@
                         <flux:heading size="lg">{{ __('hub::hub.services.tabs.goals') }}</flux:heading>
                         <flux:subheading>{{ __('hub::hub.services.empty.no_goals_description') }}</flux:subheading>
                     </div>
-                    <flux:button href="{{ route('hub.analytics') }}" wire:navigate icon="plus" variant="primary">
+                    <flux:button href="{{ \Website\Hub\Boot::hubRoute('hub.analytics') }}" wire:navigate icon="plus" variant="primary">
                         {{ __('hub::hub.services.actions.create_goal') }}
                     </flux:button>
                 </div>
@@ -1073,7 +1073,7 @@
                                     <flux:dropdown>
                                         <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
                                         <flux:menu>
-                                            <flux:menu.item icon="pencil" href="{{ route('hub.analytics') }}" wire:navigate>Edit</flux:menu.item>
+                                            <flux:menu.item icon="pencil" href="{{ \Website\Hub\Boot::hubRoute('hub.analytics') }}" wire:navigate>Edit</flux:menu.item>
                                             <flux:menu.item icon="{{ $goal->is_enabled ? 'eye-slash' : 'eye' }}">
                                                 {{ $goal->is_enabled ? 'Disable' : 'Enable' }}
                                             </flux:menu.item>
@@ -1137,7 +1137,7 @@
                             <flux:subheading class="text-center mt-1 max-w-sm">
                                 {{ __('hub::hub.services.empty.no_goals_description') }}
                             </flux:subheading>
-                            <flux:button href="{{ route('hub.analytics') }}" wire:navigate icon="plus" class="mt-4">
+                            <flux:button href="{{ \Website\Hub\Boot::hubRoute('hub.analytics') }}" wire:navigate icon="plus" class="mt-4">
                                 {{ __('hub::hub.services.actions.create_goal') }}
                             </flux:button>
                         </div>
@@ -1217,7 +1217,7 @@
                             </div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No website configured</h3>
                             <p class="text-gray-500 dark:text-gray-400 mb-4 max-w-sm">Add a website to configure analytics settings.</p>
-                            <flux:button href="{{ route('hub.analytics.create') }}" wire:navigate icon="plus">
+                            <flux:button href="{{ \Website\Hub\Boot::hubRoute('hub.analytics.create') }}" wire:navigate icon="plus">
                                 Add Website
                             </flux:button>
                         </div>
@@ -1278,7 +1278,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.websites_by_subscribers') }}</h3>
-                        <a href="{{ route('hub.notify') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.notify') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                             {{ __('hub::hub.services.actions.manage_notifyhost') }}
                         </a>
@@ -1319,7 +1319,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.recent_subscribers') }}</h3>
-                        <a href="{{ route('hub.notify') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.notify') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                             {{ __('hub::hub.services.actions.view_all') }}
                         </a>
@@ -1364,7 +1364,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.campaigns') }}</h3>
-                        <a href="{{ route('hub.notify') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-500 text-white hover:bg-indigo-600">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.notify') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-500 text-white hover:bg-indigo-600">
                             <i class="fa-solid fa-plus text-xs"></i>
                             {{ __('hub::hub.services.actions.create_campaign') }}
                         </a>
@@ -1500,7 +1500,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.campaigns') }}</h3>
-                        <a href="{{ route('hub.trust') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.trust') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                             {{ __('hub::hub.services.actions.manage_trusthost') }}
                         </a>
@@ -1565,7 +1565,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.all_campaigns') }}</h3>
-                        <a href="{{ route('hub.trust') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-orange-500 text-white hover:bg-orange-600">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.trust') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-orange-500 text-white hover:bg-orange-600">
                             <i class="fa-solid fa-plus text-xs"></i>
                             {{ __('hub::hub.services.actions.create_campaign') }}
                         </a>
@@ -1605,7 +1605,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.headings.widgets_by_impressions') }}</h3>
-                        <a href="{{ route('hub.trust') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.trust') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                             {{ __('hub::hub.services.actions.view_all') }}
                         </a>
@@ -1775,7 +1775,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('hub::hub.services.support.recent_conversations') }}</h3>
-                        <a href="{{ route('hub.services', ['service' => 'support', 'tab' => 'inbox']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'support', 'tab' => 'inbox']) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300">
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                             {{ __('hub::hub.services.support.view_inbox') }}
                         </a>
@@ -1841,7 +1841,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div class="text-center py-8">
                         <p class="text-gray-500 dark:text-gray-400">
-                            <a href="{{ route('hub.services', ['service' => 'support', 'tab' => 'inbox']) }}" wire:navigate class="text-teal-600 hover:text-teal-700">{{ __('hub::hub.services.support.open_full_inbox') }}</a>
+                            <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'support', 'tab' => 'inbox']) }}" wire:navigate class="text-teal-600 hover:text-teal-700">{{ __('hub::hub.services.support.open_full_inbox') }}</a>
                         </p>
                     </div>
                 </div>
@@ -1849,7 +1849,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div class="text-center py-8">
                         <p class="text-gray-500 dark:text-gray-400">
-                            <a href="{{ route('hub.services', ['service' => 'support', 'tab' => 'settings']) }}" wire:navigate class="text-teal-600 hover:text-teal-700">{{ __('hub::hub.services.support.open_settings') }}</a>
+                            <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'support', 'tab' => 'settings']) }}" wire:navigate class="text-teal-600 hover:text-teal-700">{{ __('hub::hub.services.support.open_settings') }}</a>
                         </p>
                     </div>
                 </div>
@@ -1864,7 +1864,7 @@
                         <i class="fa-solid fa-shopping-cart text-4xl text-green-500 mb-4"></i>
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Commerce Dashboard</h3>
                         <p class="text-gray-500 dark:text-gray-400 mb-4">Manage orders, subscriptions, and coupons.</p>
-                        <a href="{{ route('hub.services', ['service' => 'commerce']) }}" wire:navigate class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'commerce']) }}" wire:navigate class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                             <i class="fa-solid fa-gauge"></i>
                             Go to Dashboard
                         </a>
@@ -1874,7 +1874,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div class="text-center py-8">
                         <p class="text-gray-500 dark:text-gray-400">
-                            <a href="{{ route('hub.services', ['service' => 'commerce', 'tab' => 'orders']) }}" wire:navigate class="text-green-600 hover:text-green-700">Open orders →</a>
+                            <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'commerce', 'tab' => 'orders']) }}" wire:navigate class="text-green-600 hover:text-green-700">Open orders →</a>
                         </p>
                     </div>
                 </div>
@@ -1882,7 +1882,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div class="text-center py-8">
                         <p class="text-gray-500 dark:text-gray-400">
-                            <a href="{{ route('hub.services', ['service' => 'commerce', 'tab' => 'subscriptions']) }}" wire:navigate class="text-green-600 hover:text-green-700">Open subscriptions →</a>
+                            <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'commerce', 'tab' => 'subscriptions']) }}" wire:navigate class="text-green-600 hover:text-green-700">Open subscriptions →</a>
                         </p>
                     </div>
                 </div>
@@ -1890,7 +1890,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div class="text-center py-8">
                         <p class="text-gray-500 dark:text-gray-400">
-                            <a href="{{ route('hub.services', ['service' => 'commerce', 'tab' => 'coupons']) }}" wire:navigate class="text-green-600 hover:text-green-700">Open coupons →</a>
+                            <a href="{{ \Website\Hub\Boot::hubRoute('hub.services', ['service' => 'commerce', 'tab' => 'coupons']) }}" wire:navigate class="text-green-600 hover:text-green-700">Open coupons →</a>
                         </p>
                     </div>
                 </div>
