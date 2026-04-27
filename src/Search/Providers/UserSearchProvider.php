@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Core\Admin\Search\Providers;
 
+use Core\Admin\Search\Concerns\BuildsLikeTerms;
 use Core\Admin\Search\SearchProvider;
 use Core\Admin\Search\SearchResult;
 use Core\Tenant\Models\User;
@@ -19,15 +20,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserSearchProvider implements SearchProvider
 {
+    use BuildsLikeTerms;
+
     /**
      * @param  class-string<Model>  $modelClass
+     * @param  int  $candidateLimit  Database-level safety cap before in-memory ranking.
      *
      * @example
-     * $provider = new UserSearchProvider(User::class, 10);
+     * $provider = new UserSearchProvider(User::class, 10, 1000);
      */
     public function __construct(
         private readonly string $modelClass = User::class,
-        private readonly int $limit = 10
+        private readonly int $limit = 10,
+        private readonly int $candidateLimit = 1000
     ) {}
 
     /**
@@ -52,6 +57,7 @@ class UserSearchProvider implements SearchProvider
                 $builder->whereRaw("name LIKE ? ESCAPE '!'", [$term])
                     ->orWhereRaw("email LIKE ? ESCAPE '!'", [$term]);
             })
+            ->limit($this->candidateLimit())
             ->get()
             ->map(fn (Model $user): SearchResult => $this->resultFor($user, $query))
             ->sortByDesc(static fn (SearchResult $result): int => $result->score)
@@ -105,14 +111,14 @@ class UserSearchProvider implements SearchProvider
     }
 
     /**
-     * Escape wildcard characters and wrap a query for portable SQL LIKE.
+     * Get the bounded candidate count loaded before in-memory ranking.
      *
      * @example
-     * $term = $this->likeTerm('100%');
+     * $limit = $this->candidateLimit();
      */
-    private function likeTerm(string $query): string
+    private function candidateLimit(): int
     {
-        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query).'%';
+        return max($this->limit, $this->candidateLimit, 1);
     }
 
     /**

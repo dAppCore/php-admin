@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Core\Admin\Search\Providers;
 
+use Core\Admin\Search\Concerns\BuildsLikeTerms;
 use Core\Admin\Search\SearchProvider;
 use Core\Admin\Search\SearchResult;
 use Core\Tenant\Models\Workspace;
@@ -19,6 +20,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class WorkspaceSearchProvider implements SearchProvider
 {
+    use BuildsLikeTerms;
+
     /**
      * @param  class-string<Model>  $modelClass
      *
@@ -102,17 +105,6 @@ class WorkspaceSearchProvider implements SearchProvider
             category: $this->getLabel(),
             score: $this->score($query, $name, $slug),
         );
-    }
-
-    /**
-     * Escape wildcard characters and wrap a query for portable SQL LIKE.
-     *
-     * @example
-     * $term = $this->likeTerm('docs_');
-     */
-    private function likeTerm(string $query): string
-    {
-        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query).'%';
     }
 
     /**

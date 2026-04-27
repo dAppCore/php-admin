@@ -238,6 +238,22 @@ describe('SearchResult DTO', function (): void {
             ->and($numericSubtitleLegacyShape->subtitle)->toBe('12345')
             ->and($numericSubtitleLegacyShape->score)->toBe(0);
     });
+
+    it('Ugly: delegates array payload normalisation through the constructor', function (): void {
+        $result = SearchResult::fromArray([
+            'title' => 'Workspace',
+            'url' => '/hub/workspaces/primary-site',
+            'category' => 'Workspaces',
+            'score' => '85',
+            'meta' => 'invalid',
+        ]);
+
+        expect($result->title)->toBe('Workspace')
+            ->and($result->type)->toBe('Workspaces')
+            ->and($result->category)->toBe('Workspaces')
+            ->and($result->score)->toBe(85)
+            ->and($result->meta)->toBe([]);
+    });
 });
 
 describe('UserSearchProvider', function (): void {
@@ -285,6 +301,18 @@ describe('UserSearchProvider', function (): void {
         expect($results)->toHaveCount(1)
             ->and($results[0]->title)->toBe('target')
             ->and($results[0]->score)->toBe(100);
+    });
+
+    it('Ugly: applies a configurable user candidate cap before ranking', function (): void {
+        SearchSystemUserModel::query()->create(['name' => 'The Target Person', 'email' => 'first@example.test']);
+        SearchSystemUserModel::query()->create(['name' => 'target', 'email' => 'second@example.test']);
+
+        $provider = new UserSearchProvider(SearchSystemUserModel::class, 1, 1);
+        $results = $provider->search('target');
+
+        expect($results)->toHaveCount(1)
+            ->and($results[0]->title)->toBe('The Target Person')
+            ->and($results[0]->score)->toBe(80);
     });
 });
 

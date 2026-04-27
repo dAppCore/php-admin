@@ -65,17 +65,15 @@ final class SearchResult implements Arrayable, JsonSerializable
      */
     public static function fromArray(array $data): static
     {
-        return new self(
-            id: (string) ($data['id'] ?? uniqid('', true)),
-            title: (string) ($data['title'] ?? ''),
-            url: (string) ($data['url'] ?? '#'),
-            type: (string) ($data['type'] ?? $data['category'] ?? 'unknown'),
-            icon: (string) ($data['icon'] ?? 'document'),
-            subtitle: $data['subtitle'] ?? null,
-            meta: $data['meta'] ?? [],
-            category: (string) ($data['category'] ?? $data['type'] ?? 'unknown'),
-            score: (int) ($data['score'] ?? 0),
-        );
+        $args = [];
+
+        foreach (['id', 'title', 'url', 'type', 'icon', 'subtitle', 'meta', 'category', 'score'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $args[$key] = $data[$key];
+            }
+        }
+
+        return new self(...$args);
     }
 
     /**
