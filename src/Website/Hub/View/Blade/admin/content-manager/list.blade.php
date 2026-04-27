@@ -150,7 +150,7 @@
                     <core:table.cell align="end">
                         <div class="flex items-center gap-1">
                             @if($item->usesFluxEditor())
-                                <core:button href="{{ route('hub.content-editor.edit', ['workspace' => $workspaceSlug, 'id' => $item->id]) }}" variant="ghost" size="sm" icon="pencil" title="{{ __('hub::hub.content_manager.list.edit') }}" />
+                                <core:button href="{{ \Website\Hub\Boot::hubRoute('hub.content-editor.edit', ['workspace' => $workspaceSlug, 'id' => $item->id]) }}" variant="ghost" size="sm" icon="pencil" title="{{ __('hub::hub.content_manager.list.edit') }}" />
                             @endif
                             <core:button wire:click="selectItem({{ $item->id }})" variant="ghost" size="sm" icon="eye" title="{{ __('hub::hub.content_manager.list.preview') }}" />
                         </div>

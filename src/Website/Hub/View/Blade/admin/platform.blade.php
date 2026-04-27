@@ -169,7 +169,7 @@
                                             <core:icon name="check" />
                                         </button>
                                         @endif
-                                        <a href="{{ route('hub.platform.user', $user->id) }}" wire:navigate class="p-1.5 text-violet-600 hover:bg-violet-500/20 rounded-lg transition" title="View user details">
+                                        <a href="{{ \Website\Hub\Boot::hubRoute('hub.platform.user', $user->id) }}" wire:navigate class="p-1.5 text-violet-600 hover:bg-violet-500/20 rounded-lg transition" title="View user details">
                                             <core:icon name="arrow-right" />
                                         </a>
                                     </div>

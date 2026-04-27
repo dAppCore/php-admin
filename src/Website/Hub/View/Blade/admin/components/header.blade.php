@@ -73,13 +73,13 @@
                         </div>
                         <ul>
                             <li class="border-b border-gray-200 dark:border-gray-700/60 last:border-0">
-                                <a class="block py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700/20" href="{{ route('hub.deployments') }}" @click="open = false">
+                                <a class="block py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700/20" href="{{ \Website\Hub\Boot::hubRoute('hub.deployments') }}" @click="open = false">
                                     <span class="block text-sm mb-2">New deployment completed for <span class="font-medium text-gray-800 dark:text-gray-100">Bio</span></span>
                                     <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">2 hours ago</span>
                                 </a>
                             </li>
                             <li class="border-b border-gray-200 dark:border-gray-700/60 last:border-0">
-                                <a class="block py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700/20" href="{{ route('hub.databases') }}" @click="open = false">
+                                <a class="block py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700/20" href="{{ \Website\Hub\Boot::hubRoute('hub.databases') }}" @click="open = false">
                                     <span class="block text-sm mb-2">Database backup successful for <span class="font-medium text-gray-800 dark:text-gray-100">Social</span></span>
                                     <span class="block text-xs font-medium text-gray-400 dark:text-gray-500">5 hours ago</span>
                                 </a>
@@ -153,12 +153,12 @@
                         </div>
                         <ul>
                             <li>
-                                <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1.5 px-3" href="{{ route('hub.account') }}" @click="open = false">
+                                <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1.5 px-3" href="{{ \Website\Hub\Boot::hubRoute('hub.account') }}" @click="open = false">
                                     <core:icon name="user" class="w-5 mr-2" /> Profile
                                 </a>
                             </li>
                             <li>
-                                <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1.5 px-3" href="{{ route('hub.account.settings') }}" @click="open = false">
+                                <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1.5 px-3" href="{{ \Website\Hub\Boot::hubRoute('hub.account.settings') }}" @click="open = false">
                                     <core:icon name="gear" class="w-5 mr-2" /> Settings
                                 </a>
                             </li>

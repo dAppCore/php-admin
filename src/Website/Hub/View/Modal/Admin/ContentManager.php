@@ -3,16 +3,17 @@
 namespace Website\Hub\View\Modal\Admin;
 
 use Core\Cdn\Services\BunnyCdnService;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Core\Mod\Content\Models\ContentItem;
 use Core\Mod\Content\Models\ContentTaxonomy;
 use Core\Mod\Content\Models\ContentWebhookLog;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Services\WorkspaceService;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Website\Hub\Boot;
 
 /**
  * Content Manager component.
@@ -114,27 +115,27 @@ class ContentManager extends Component
             'dashboard' => [
                 'label' => __('hub::hub.content_manager.tabs.dashboard'),
                 'icon' => 'chart-pie',
-                'href' => route('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'dashboard']),
+                'href' => Boot::hubRoute('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'dashboard']),
             ],
             'kanban' => [
                 'label' => __('hub::hub.content_manager.tabs.kanban'),
                 'icon' => 'view-columns',
-                'href' => route('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'kanban']),
+                'href' => Boot::hubRoute('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'kanban']),
             ],
             'calendar' => [
                 'label' => __('hub::hub.content_manager.tabs.calendar'),
                 'icon' => 'calendar',
-                'href' => route('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'calendar']),
+                'href' => Boot::hubRoute('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'calendar']),
             ],
             'list' => [
                 'label' => __('hub::hub.content_manager.tabs.list'),
                 'icon' => 'list-bullet',
-                'href' => route('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'list']),
+                'href' => Boot::hubRoute('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'list']),
             ],
             'webhooks' => [
                 'label' => __('hub::hub.content_manager.tabs.webhooks'),
                 'icon' => 'bolt',
-                'href' => route('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'webhooks']),
+                'href' => Boot::hubRoute('hub.content-manager', ['workspace' => $this->workspaceSlug, 'view' => 'webhooks']),
             ],
         ];
     }
