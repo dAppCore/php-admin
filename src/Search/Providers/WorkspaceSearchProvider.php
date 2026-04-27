@@ -24,13 +24,15 @@ class WorkspaceSearchProvider implements SearchProvider
 
     /**
      * @param  class-string<Model>  $modelClass
+     * @param  int  $candidateLimit  Database-level safety cap before in-memory ranking.
      *
      * @example
-     * $provider = new WorkspaceSearchProvider(Workspace::class, 10);
+     * $provider = new WorkspaceSearchProvider(Workspace::class, 10, 1000);
      */
     public function __construct(
         private readonly string $modelClass = Workspace::class,
-        private readonly int $limit = 10
+        private readonly int $limit = 10,
+        private readonly int $candidateLimit = 1000
     ) {}
 
     /**
@@ -55,6 +57,7 @@ class WorkspaceSearchProvider implements SearchProvider
                 $builder->whereRaw("name LIKE ? ESCAPE '!'", [$term])
                     ->orWhereRaw("slug LIKE ? ESCAPE '!'", [$term]);
             })
+            ->limit($this->candidateLimit())
             ->get()
             ->map(fn (Model $workspace): SearchResult => $this->resultFor($workspace, $query))
             ->sortByDesc(static fn (SearchResult $result): int => $result->score)
@@ -105,6 +108,17 @@ class WorkspaceSearchProvider implements SearchProvider
             category: $this->getLabel(),
             score: $this->score($query, $name, $slug),
         );
+    }
+
+    /**
+     * Get the bounded candidate count loaded before in-memory ranking.
+     *
+     * @example
+     * $limit = $this->candidateLimit();
+     */
+    private function candidateLimit(): int
+    {
+        return max($this->limit, $this->candidateLimit, 1);
     }
 
     /**

@@ -102,7 +102,7 @@ final class SearchResult implements Arrayable, JsonSerializable
     /**
      * Convert the result to an array.
      *
-     * @return array{id: string, title: string, subtitle: ?string, url: string, type: string, icon: string, meta: array}
+     * @return array{id: string, title: string, subtitle: ?string, url: string, type: string, icon: string, category: string, score: int, meta: array}
      *
      * @example
      * $payload = $result->toArray();
@@ -116,6 +116,8 @@ final class SearchResult implements Arrayable, JsonSerializable
             'url' => $this->url,
             'type' => $this->type,
             'icon' => $this->icon,
+            'category' => $this->category,
+            'score' => $this->score,
             'meta' => $this->meta,
         ];
     }
@@ -123,7 +125,7 @@ final class SearchResult implements Arrayable, JsonSerializable
     /**
      * Specify data which should be serialized to JSON.
      *
-     * @return array{id: string, title: string, subtitle: ?string, url: string, type: string, icon: string, meta: array}
+     * @return array{id: string, title: string, subtitle: ?string, url: string, type: string, icon: string, category: string, score: int, meta: array}
      *
      * @example
      * json_encode($result);

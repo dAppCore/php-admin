@@ -254,6 +254,27 @@ describe('SearchResult DTO', function (): void {
             ->and($result->score)->toBe(85)
             ->and($result->meta)->toBe([]);
     });
+
+    it('Ugly: preserves category and score during array and JSON serialisation', function (): void {
+        $result = new SearchResult(
+            title: 'Workspace',
+            subtitle: 'primary-site',
+            url: '/hub/workspaces/primary-site',
+            icon: 'fa-folder',
+            category: 'Workspaces',
+            score: 85,
+        );
+
+        expect($result->toArray())->toMatchArray([
+            'category' => 'Workspaces',
+            'score' => 85,
+        ])
+            ->and($result->jsonSerialize())->toMatchArray([
+                'category' => 'Workspaces',
+                'score' => 85,
+            ])
+            ->and(SearchResult::fromArray($result->toArray())->score)->toBe(85);
+    });
 });
 
 describe('UserSearchProvider', function (): void {
@@ -361,6 +382,18 @@ describe('WorkspaceSearchProvider', function (): void {
         expect($results)->toHaveCount(1)
             ->and($results[0]->title)->toBe('target')
             ->and($results[0]->score)->toBe(100);
+    });
+
+    it('Ugly: applies a configurable workspace candidate cap before ranking', function (): void {
+        SearchSystemWorkspaceModel::query()->create(['name' => 'The Target Workspace', 'slug' => 'target-workspace']);
+        SearchSystemWorkspaceModel::query()->create(['name' => 'target', 'slug' => 'exact-target']);
+
+        $provider = new WorkspaceSearchProvider(SearchSystemWorkspaceModel::class, 1, 1);
+        $results = $provider->search('target');
+
+        expect($results)->toHaveCount(1)
+            ->and($results[0]->title)->toBe('The Target Workspace')
+            ->and($results[0]->score)->toBe(80);
     });
 });
 
