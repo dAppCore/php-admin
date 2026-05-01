@@ -40,6 +40,10 @@
             ]
         }
     },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "lint": "vendor/bin/pint"
+    },
     "minimum-stability": "stable",
     "prefer-stable": true,
     "replace": {

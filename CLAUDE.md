@@ -9,12 +9,13 @@ This is the **Core Admin Package** (`lthn/php-admin`) - an admin panel and servi
 ## Commands
 
 ```bash
-php artisan serve             # Laravel dev server
-npm run dev                   # Vite dev server (Tailwind v4)
-npm run build                 # Production asset build
-./vendor/bin/pint --dirty     # Format changed files only
-./vendor/bin/pest             # Run all tests
-./vendor/bin/pest --filter=SearchTest  # Run specific test
+composer test                         # Run all tests (Pest)
+composer test -- --filter=SearchTest  # Run specific test
+composer lint                         # Fix code style (Pint)
+./vendor/bin/pint --dirty             # Format changed files only
+php artisan serve                     # Laravel dev server
+npm run dev                           # Vite dev server (Tailwind v4)
+npm run build                         # Production asset build
 ```
 
 CI matrix: PHP 8.2, 8.3, 8.4.
