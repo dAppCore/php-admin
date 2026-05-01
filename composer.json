@@ -10,13 +10,27 @@
     "license": "EUPL-1.2",
     "require": {
         "php": "^8.2",
-        "lthn/php": "*"
+        "lthn/php": "^0.0.4"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29",
+        "pestphp/pest": "^3.8"
     },
     "autoload": {
         "psr-4": {
             "Core\\Admin\\": "src/",
             "Website\\Hub\\": "src/Website/Hub/",
             "Core\\Service\\Admin\\": "Service/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
         }
     },
     "extra": {

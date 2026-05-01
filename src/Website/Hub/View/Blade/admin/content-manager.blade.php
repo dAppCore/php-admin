@@ -20,7 +20,7 @@
                     {{ $syncMessage }}
                 </core:text>
             @endif
-            <core:button href="{{ route('hub.content-editor.create', ['workspace' => $workspaceSlug, 'contentType' => 'hostuk']) }}" variant="primary" icon="plus">
+            <core:button href="{{ \Website\Hub\Boot::hubRoute('hub.content-editor.create', ['workspace' => $workspaceSlug, 'contentType' => 'hostuk']) }}" variant="primary" icon="plus">
                 {{ __('hub::hub.content_manager.actions.new_content') }}
             </core:button>
             <core:button wire:click="syncAll" wire:loading.attr="disabled" icon="arrow-path" :loading="$syncing">
@@ -54,7 +54,7 @@
         <core:command.items>
             <core:command.item icon="arrow-path" wire:click="syncAll">{{ __('hub::hub.content_manager.command.sync_all') }}</core:command.item>
             <core:command.item icon="trash" wire:click="purgeCache">{{ __('hub::hub.content_manager.command.purge_cache') }}</core:command.item>
-            <core:command.item icon="arrow-top-right-on-square" href="{{ route('hub.content', ['workspace' => $workspaceSlug, 'type' => 'posts']) }}">{{ __('hub::hub.content_manager.command.open_wordpress') }}</core:command.item>
+            <core:command.item icon="arrow-top-right-on-square" href="{{ \Website\Hub\Boot::hubRoute('hub.content', ['workspace' => $workspaceSlug, 'type' => 'posts']) }}">{{ __('hub::hub.content_manager.command.open_wordpress') }}</core:command.item>
         </core:command.items>
         <core:command.empty>{{ __('hub::hub.content_manager.command.no_results') }}</core:command.empty>
     </core:command>

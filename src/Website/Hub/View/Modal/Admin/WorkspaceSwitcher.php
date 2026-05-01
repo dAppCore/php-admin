@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Website\Hub\View\Modal\Admin;
 
-use Livewire\Attributes\On;
 use Core\Tenant\Services\WorkspaceService;
+use Livewire\Attributes\On;
 use Livewire\Component;
+use Website\Hub\Boot;
 
 class WorkspaceSwitcher extends Component
 {
@@ -65,7 +66,7 @@ class WorkspaceSwitcher extends Component
         $this->dispatch('workspace-changed', workspace: $slug);
 
         // Redirect to the page we were on (captured during mount)
-        $this->redirect($this->returnUrl ?: route('hub.dashboard'));
+        $this->redirect($this->returnUrl ?: Boot::hubRoute('hub.dashboard'));
     }
 
     public function render()

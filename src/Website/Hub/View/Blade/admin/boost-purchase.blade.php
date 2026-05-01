@@ -81,7 +81,7 @@
 
         <!-- Back Link -->
         <div class="flex justify-start">
-            <core:button href="{{ route('hub.usage') }}" variant="ghost">
+            <core:button href="{{ \Website\Hub\Boot::hubRoute('hub.usage') }}" variant="ghost">
                 <core:icon name="arrow-left" class="mr-2" />
                 {{ __('hub::hub.boosts.actions.back') }}
             </core:button>

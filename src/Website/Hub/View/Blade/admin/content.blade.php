@@ -25,15 +25,15 @@
     <div class="mb-6">
         <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="flex gap-x-4" aria-label="Tabs">
-                <a href="{{ route('hub.content', ['workspace' => $currentWorkspace['slug'] ?? 'main', 'type' => 'posts']) }}"
+                <a href="{{ \Website\Hub\Boot::hubRoute('hub.content', ['workspace' => $currentWorkspace['slug'] ?? 'main', 'type' => 'posts']) }}"
                    class="px-3 py-2.5 text-sm font-medium border-b-2 {{ $tab === 'posts' ? 'border-violet-500 text-violet-600 dark:text-violet-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300' }}">
                     <core:icon name="newspaper" class="mr-2" />{{ __('hub::hub.content.tabs.posts') }}
                 </a>
-                <a href="{{ route('hub.content', ['workspace' => $currentWorkspace['slug'] ?? 'main', 'type' => 'pages']) }}"
+                <a href="{{ \Website\Hub\Boot::hubRoute('hub.content', ['workspace' => $currentWorkspace['slug'] ?? 'main', 'type' => 'pages']) }}"
                    class="px-3 py-2.5 text-sm font-medium border-b-2 {{ $tab === 'pages' ? 'border-violet-500 text-violet-600 dark:text-violet-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300' }}">
                     <core:icon name="file-lines" class="mr-2" />{{ __('hub::hub.content.tabs.pages') }}
                 </a>
-                <a href="{{ route('hub.content', ['workspace' => $currentWorkspace['slug'] ?? 'main', 'type' => 'media']) }}"
+                <a href="{{ \Website\Hub\Boot::hubRoute('hub.content', ['workspace' => $currentWorkspace['slug'] ?? 'main', 'type' => 'media']) }}"
                    class="px-3 py-2.5 text-sm font-medium border-b-2 {{ $tab === 'media' ? 'border-violet-500 text-violet-600 dark:text-violet-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300' }}">
                     <core:icon name="images" class="mr-2" />{{ __('hub::hub.content.tabs.media') }}
                 </a>

@@ -34,6 +34,7 @@ class Boot extends ServiceProvider
 
         // Register the search provider registry as a singleton
         $this->app->singleton(SearchProviderRegistry::class);
+        $this->app->singleton(\Core\Admin\Menu\AdminMenuRegistry::class);
     }
 
     public function boot(): void

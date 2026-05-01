@@ -330,7 +330,7 @@
                                                     @endif
                                                 </div>
                                                 <div class="flex items-center gap-2">
-                                                    <a href="{{ route('hub.sites.settings', $ws['workspace']->slug) }}" class="text-violet-500 hover:text-violet-600">
+                                                    <a href="{{ \Website\Hub\Boot::hubRoute('hub.sites.settings', $ws['workspace']->slug) }}" class="text-violet-500 hover:text-violet-600">
                                                         <core:icon name="gear" />
                                                     </a>
                                                 </div>
