@@ -10,7 +10,7 @@
     "license": "EUPL-1.2",
     "require": {
         "php": "^8.2",
-        "lthn/php": "^0.0.4"
+        "lthn/php": "^0.4.0"
     },
     "require-dev": {
         "laravel/pint": "^1.29",
